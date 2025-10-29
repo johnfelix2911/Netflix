@@ -111,7 +111,7 @@ def LSD_test(df,level,val,SSE,alpha=0.05): # John
                         dic[g2].append(g1)
     return dic
 
-def pie_by_count(
+def pie_by_count(   #Daksh
     df,
     column="type",
     title="Catalog Composition",
@@ -157,7 +157,7 @@ def pie_by_count(
     ax.axis("equal")
     if show:
         plt.show()
-def barh_top_counts_series(
+def barh_top_counts_series(   #Daksh
     s,
     *,
     top_n: int | None = None,
