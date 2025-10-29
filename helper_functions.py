@@ -1,4 +1,4 @@
-def generate_boxplot(df,cat,val,outlier=True):
+def generate_boxplot(df,cat,val,outlier=True): # John
 
     # INPUTS:
     # df (pandas dataframe) -> the dataframe that contains the data
@@ -22,7 +22,8 @@ def generate_boxplot(df,cat,val,outlier=True):
         x=cat,
         y=val,
         order=genre_medians.index, # sort by median
-        showfliers=outlier
+        showfliers=outlier,
+        color='red'
     )
     
     plt.xlabel(cat, fontsize=14)
@@ -33,7 +34,7 @@ def generate_boxplot(df,cat,val,outlier=True):
     plt.savefig(val+" vs "+cat+" sorted.png")
     plt.show()
 
-def Ftest(df,level,val,alpha=0.05):
+def Ftest(df,level,val,alpha=0.05): # John
 
     # INPUTS
     # df (pandas dataframe) -> dataframe that contains the data
@@ -70,7 +71,7 @@ def Ftest(df,level,val,alpha=0.05):
     f_crit=f.ppf(1-alpha,a-1,N-a)
     return f_stat,f_crit,SSE
 
-def LSD_test(df,level,val,SSE,alpha=0.05):
+def LSD_test(df,level,val,SSE,alpha=0.05): # John
 
     # INPUTS
     # df (pandas dataframe) -> dataframe that contains the data
