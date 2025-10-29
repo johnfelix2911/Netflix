@@ -31,7 +31,7 @@ def generate_boxplot(df,cat,val,outlier=True): # John
     plt.title("Boxplot of "+val+" by "+cat+" (Sorted by Median)", fontsize=16)
     plt.xticks(rotation=45, fontsize=12)
     plt.yticks(fontsize=12)
-    plt.savefig(val+" vs "+cat+" sorted.png")
+    # plt.savefig(val+" vs "+cat+" sorted.png")
     plt.show()
 
 def Ftest(df,level,val,alpha=0.05): # John
