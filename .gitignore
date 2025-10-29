@@ -1,0 +1,54 @@
+# ===============================
+# Python and Jupyter Git Ignore
+# ===============================
+
+# Ignore Jupyter Notebook files
+*.ipynb
+
+# Ignore PNG image files
+*.png
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ignore virtual environment folders
+venv/
+env/
+.venv/
+ENV/
+
+# Ignore compiled C extensions
+*.so
+
+# Ignore distribution and packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE-specific settings
+.vscode/
+.idea/
+
+# Ignore test coverage and reports
+htmlcov/
+.coverage
+.pytest_cache/
+
+# folders to ve ignored
+Data/
