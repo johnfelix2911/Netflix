@@ -116,7 +116,7 @@ def pie_by_count(   #Daksh
     column="type",
     title="Catalog Composition",
     *,
-    colors=None,
+    colors=["#E50914", "#000000"],
     figsize=(8, 6),
     text_color="white",
     font_size=12,
@@ -128,13 +128,21 @@ def pie_by_count(   #Daksh
     startangle=90,
     show=True,
 ):
+    """
+    Draws a pie chart from value counts of a dataframe column.
+    Inputs:-
+    1)df : pd.DataFrame
+        Dataframe containing the data.
+    2)column : string
+        Name of the column to plot.
+    3)title : string
+        Title of the pie chart.
+    """
+     
     import matplotlib.pyplot as plt
     import pandas as pd
     import seaborn as sns
     import numpy as np
-    """
-    Draws a pie chart from value counts of a dataframe column.
-    """
     if column not in df.columns:
         raise KeyError(f"'{column}' not in dataframe columns")
 
@@ -157,10 +165,10 @@ def pie_by_count(   #Daksh
     ax.axis("equal")
     if show:
         plt.show()
+
 def barh_top_counts_series(   #Daksh
     s,
     *,
-    top_n: int | None = None,
     title: str = "Top Categories (Count & Share)",
     xlabel: str = "Count",
     color: str = "#E50914",
@@ -170,20 +178,25 @@ def barh_top_counts_series(   #Daksh
     show: bool = True,
     save_path: str | None = None,
 ):
+    """
+    Draw a horizontal bar chart from a counts Series (index=labels, values=counts).
+    Inputs:-
+    1)s : pd.Series
+        Series of counts (index=labels, values=counts).
+    2)title : string
+    3)xlabel : string
+    4)color : string
+        Bar color.
+    """
     import matplotlib.pyplot as plt
     import pandas as pd
     import numpy as np
     import seaborn as sns
-    """
-    Draw a horizontal bar chart from a counts Series (index=labels, values=counts).
-    """
     if not isinstance(s, pd.Series):
         raise TypeError("Expected a pandas Series of counts.")
 
-    # Use provided Series; optionally keep only top_n
+    # Use provided Series;
     s_plot = s.sort_values(ascending=False)
-    if top_n is not None:
-        s_plot = s_plot.head(top_n)
 
     denom = total if total is not None else int(s_plot.sum())
 
