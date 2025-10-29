@@ -110,3 +110,98 @@ def LSD_test(df,level,val,SSE,alpha=0.05): # John
                     else:
                         dic[g2].append(g1)
     return dic
+
+def pie_by_count(
+    df,
+    column="type",
+    title="Catalog Composition",
+    *,
+    colors=None,
+    figsize=(8, 6),
+    text_color="white",
+    font_size=12,
+    wedge_edgecolor="white",
+    wedge_linewidth=1,
+    labeldistance=0.30,
+    pctdistance=0.80,
+    autopct="%1.1f%%",
+    startangle=90,
+    show=True,
+):
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+    import numpy as np
+    """
+    Draws a pie chart from value counts of a dataframe column.
+    """
+    if column not in df.columns:
+        raise KeyError(f"'{column}' not in dataframe columns")
+
+    counts = df[column].value_counts(dropna=False)
+    labels = counts.index.astype(str)
+
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.pie(
+        counts.values,
+        labels=labels,
+        colors=colors,
+        textprops={"color": text_color, "fontsize": font_size},
+        wedgeprops={"edgecolor": wedge_edgecolor, "linewidth": wedge_linewidth},
+        labeldistance=labeldistance,
+        pctdistance=pctdistance,
+        autopct=autopct,
+        startangle=startangle,
+    )
+    ax.set_title(title)
+    ax.axis("equal")
+    if show:
+        plt.show()
+def barh_top_counts_series(
+    s,
+    *,
+    top_n: int | None = None,
+    title: str = "Top Categories (Count & Share)",
+    xlabel: str = "Count",
+    color: str = "#E50914",
+    fontsize: int = 10,
+    x_margin: float = 0.12,
+    total: int | None = None,   # denominator for percentages; default = s.sum()
+    show: bool = True,
+    save_path: str | None = None,
+):
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import numpy as np
+    import seaborn as sns
+    """
+    Draw a horizontal bar chart from a counts Series (index=labels, values=counts).
+    """
+    if not isinstance(s, pd.Series):
+        raise TypeError("Expected a pandas Series of counts.")
+
+    # Use provided Series; optionally keep only top_n
+    s_plot = s.sort_values(ascending=False)
+    if top_n is not None:
+        s_plot = s_plot.head(top_n)
+
+    denom = total if total is not None else int(s_plot.sum())
+
+    # Reverse for largest at top in barh
+    labels = s_plot.index[::-1].astype(str)
+    values = s_plot.values[::-1]
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    ax.barh(labels, values, color=color)
+    ax.margins(x=x_margin)
+
+    # Annotate: "count (pct)"
+    for i, v in enumerate(values):
+        pct = (v / denom) if denom else 0.0
+        ax.text(v, i, f" {v} ({pct:.1%})", va="center", color="#111", fontsize=fontsize)
+
+    ax.set(title=title, xlabel=xlabel, ylabel="")
+    plt.tight_layout()
+
+    if show:
+        plt.show()
