@@ -218,3 +218,63 @@ def barh_top_counts_series(   #Daksh
 
     if show:
         plt.show()
+
+def genre_wordcloud(df, col='genres', title='Genre Popularity Word Cloud'):
+    """
+    Generate and display a word cloud of popular genres (or any categorical feature).
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input DataFrame containing the genre or categorical column.
+    col : str, optional
+        Column name containing genre or categorical data (default='genres').
+    title : str, optional
+        Title of the plot (default='Genre Popularity Word Cloud').
+
+    Returns
+    -------
+    WordCloud
+        The generated WordCloud object (for further use or saving).
+    """
+
+    from wordcloud import WordCloud
+    import matplotlib.pyplot as plt
+    from collections import Counter
+
+    # --- Step 1: Extract and clean genre data ---
+    # Ensure each entry is a list
+    genres_list = []
+    for entry in df[col]:
+        if isinstance(entry, str):
+            # Split by comma if stored as string
+            genres_list.extend([g.strip() for g in entry.split(',') if g.strip()])
+        elif isinstance(entry, list):
+            genres_list.extend(entry)
+        # ignore missing/invalid entries silently
+
+    # --- Step 2: Count frequency of each genre ---
+    genre_counts = Counter(genres_list)
+
+    if not genre_counts:
+        print("No valid genre data found. Please check your column format.")
+        return None
+
+    # --- Step 3: Generate word cloud ---
+    wc = WordCloud(
+        width=1200,
+        height=600,
+        background_color='white',
+        colormap='plasma',
+        prefer_horizontal=0.9
+    ).generate_from_frequencies(genre_counts)
+
+    # --- Step 4: Display ---
+    plt.figure(figsize=(12, 6))
+    plt.imshow(wc, interpolation='bilinear')
+    plt.axis('off')
+    plt.title(title, fontsize=18)
+    plt.tight_layout()
+    plt.show()
+
+    return wc
