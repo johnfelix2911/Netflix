@@ -34,6 +34,48 @@ def generate_boxplot(df,cat,val,outlier=True): # John
     # plt.savefig(val+" vs "+cat+" sorted.png")
     plt.show()
 
+def generate_boxplot_interactive(df, cat, val, outlier=True):  # John
+    """
+    INPUTS:
+    df (pandas DataFrame): The dataframe that contains the data
+    cat (string): Name of column. Each category (discrete) gets a boxplot
+    val (string): Name of column. Value (continuous) for which the boxplot is created
+    outlier (boolean): Whether or not the outliers should be plotted (True by default)
+
+    RETURNS:
+    Displays an interactive Plotly boxplot
+    """
+    import pandas as pd
+    import plotly.express as px
+
+    # Compute median values per category and sort
+    cat_medians = df.groupby(cat)[val].median().sort_values(ascending=False)
+
+    # Create Plotly boxplot
+    fig = px.box(
+        df,
+        x=cat,
+        y=val,
+        category_orders={cat: cat_medians.index},  # Sort categories by median
+        points='outliers' if outlier else False,
+        color_discrete_sequence=['#E50914'],  # Netflix red
+    )
+
+    fig.update_layout(
+        title=f"Boxplot of {val} by {cat} (Sorted by Median)",
+        xaxis_title=cat,
+        yaxis_title=val,
+        template='plotly_dark',  # Dark Netflix-style theme
+        title_font=dict(size=22, color='white'),
+        xaxis=dict(title_font=dict(size=16), tickfont=dict(size=12)),
+        yaxis=dict(title_font=dict(size=16), tickfont=dict(size=12)),
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+    )
+
+    fig.show()
+
+
 def Ftest(df,level,val,alpha=0.05): # John
 
     # INPUTS
@@ -219,7 +261,7 @@ def barh_top_counts_series(   #Daksh
     if show:
         plt.show()
 
-def genre_wordcloud(df, col='genres', title='Genre Popularity Word Cloud'):
+def genre_wordcloud(df, col='genres', title='Genre Popularity Word Cloud'): # John
     """
     Generate and display a word cloud of popular genres (or any categorical feature).
 
@@ -278,3 +320,251 @@ def genre_wordcloud(df, col='genres', title='Genre Popularity Word Cloud'):
     plt.show()
 
     return wc
+
+def generate_treemap(df, cat, val): # John
+    """
+    Creates an interactive treemap showing contribution of each category to a continuous variable.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The dataframe containing the data.
+    cat : str
+        The name of the categorical column (e.g. 'genres').
+    val : str
+        The name of the continuous column (e.g. 'revenue').
+
+    Returns
+    -------
+    Displays an interactive treemap (Plotly figure).
+    """
+    import pandas as pd
+    import plotly.express as px
+
+    # Aggregate data
+    grouped = (
+        df.groupby(cat, dropna=True)[val]
+        .sum()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+
+    # Create treemap
+    fig = px.treemap(
+        grouped,
+        path=[cat],
+        values=val,
+        color=val,
+        color_continuous_scale=['#E50914', '#B20710', '#831010'],  # Netflix-themed red shades
+        title=f"Contribution of {cat} to Total {val}",
+    )
+
+    # Update layout for Netflix-style aesthetics
+    fig.update_layout(
+        template='plotly_dark',
+        paper_bgcolor='#141414',
+        plot_bgcolor='#141414',
+        title_font=dict(size=22, color='white'),
+    )
+
+    fig.show()
+
+
+# def generate_interactive_scatter(df, x, y, color=None, hover=None):
+#     """
+#     Creates an interactive Netflix-themed scatter plot using Plotly.
+
+#     Parameters
+#     ----------
+#     df : pandas.DataFrame
+#         The dataframe containing the data.
+#     x : str
+#         The name of the column for the x-axis (e.g. 'budget').
+#     y : str
+#         The name of the column for the y-axis (e.g. 'revenue').
+#     color : str, optional
+#         The name of the categorical column to color the points by (e.g. 'genres').
+#     hover : str or list, optional
+#         Column(s) to display when hovering (e.g. 'title' or ['title', 'rating']).
+
+#     Returns
+#     -------
+#     Displays an interactive scatter plot.
+#     """
+#     import pandas as pd
+#     import plotly.express as px
+
+#     # Drop rows with missing required values
+#     cols = [x, y]
+#     if color:
+#         cols.append(color)
+#     if hover:
+#         if isinstance(hover, list):
+#             cols.extend(hover)
+#         else:
+#             cols.append(hover)
+#     df_clean = df.dropna(subset=cols)
+
+#     # Create interactive scatter plot
+#     fig = px.scatter(
+#         df_clean,
+#         x=x,
+#         y=y,
+#         color=color,
+#         hover_data=hover,
+#         title=f"{y} vs {x}" + (f" colored by {color}" if color else ""),
+#         color_discrete_sequence=['#E50914', '#B81D24', '#831010', '#221f1f'],  # Netflix reds
+#     )
+
+#     # Style for Netflix dark theme
+#     fig.update_layout(
+#         template='plotly_dark',
+#         paper_bgcolor='#141414',
+#         plot_bgcolor='#141414',
+#         font=dict(color='white'),
+#         title_font=dict(size=22),
+#         xaxis_title=x.title(),
+#         yaxis_title=y.title(),
+#         legend_title=color.title() if color else '',
+#     )
+
+#     # Smooth marker style
+#     fig.update_traces(marker=dict(size=10, opacity=0.8, line=dict(width=1, color='white')))
+
+#     fig.show()
+
+def generate_interactive_scatter(df, x, y, color=None, hover=None): # John
+    """
+    Creates an interactive scatter plot using Plotly (dark theme + distinct colors).
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The dataframe containing the data.
+    x : str
+        The name of the column for the x-axis (e.g. 'budget').
+    y : str
+        The name of the column for the y-axis (e.g. 'revenue').
+    color : str, optional
+        The name of the categorical column to color the points by (e.g. 'genres').
+    hover : str or list, optional
+        Column(s) to display when hovering (e.g. 'title' or ['title', 'rating']).
+
+    Returns
+    -------
+    Displays an interactive scatter plot.
+    """
+    import pandas as pd
+    import plotly.express as px
+
+    # Drop rows with missing required values
+    cols = [x, y]
+    if color:
+        cols.append(color)
+    if hover:
+        if isinstance(hover, list):
+            cols.extend(hover)
+        else:
+            cols.append(hover)
+    df_clean = df.dropna(subset=cols)
+
+    # Use a distinct, high-contrast qualitative color palette
+    color_palette = px.colors.qualitative.Set3 + px.colors.qualitative.Bold + px.colors.qualitative.Safe
+
+    # Create interactive scatter plot
+    fig = px.scatter(
+        df_clean,
+        x=x,
+        y=y,
+        color=color,
+        hover_data=hover,
+        title=f"{y} vs {x}" + (f" colored by {color}" if color else ""),
+        color_discrete_sequence=color_palette,
+    )
+
+    # Dark Netflix-like theme but with colorful genres
+    fig.update_layout(
+        template='plotly_dark',
+        paper_bgcolor='#141414',
+        plot_bgcolor='#141414',
+        font=dict(color='white'),
+        title_font=dict(size=22),
+        xaxis_title=x.title(),
+        yaxis_title=y.title(),
+        legend_title=color.title() if color else '',
+    )
+
+    # Style markers for better readability
+    fig.update_traces(marker=dict(size=9, opacity=0.8, line=dict(width=0.5, color='white')))
+
+    fig.show()
+
+# def generate_bar_chart_race(df, category, value, time_col, title=None, n_bars=10, filename='bar_chart_race.mp4'):
+#     """
+#     Creates a bar chart race animation showing how a value changes over time across categories.
+
+#     Parameters
+#     ----------
+#     df : pandas.DataFrame
+#         DataFrame containing the data.
+#     category : str
+#         Name of the categorical column (e.g. 'genres').
+#     value : str
+#         Name of the numeric column (e.g. 'popularity').
+#     time_col : str
+#         Name of the time column (e.g. 'release_year').
+#     title : str, optional
+#         Title for the chart (default: auto-generated).
+#     n_bars : int, optional
+#         Number of top bars to display (default: 10).
+#     filename : str, optional
+#         Output file name (e.g. 'bar_chart_race.mp4' or '.gif').
+
+#     Returns
+#     -------
+#     Displays and saves a bar chart race animation.
+#     """
+
+#     import pandas as pd
+#     import bar_chart_race as bcr
+
+#     # Clean data: remove missing values and aggregate by year and category
+#     df_clean = (
+#         df.dropna(subset=[category, value, time_col])
+#         .groupby([time_col, category])[value]
+#         .mean()
+#         .reset_index()
+#     )
+
+#     # Pivot the table to get years as index and categories as columns
+#     pivot_df = df_clean.pivot(index=time_col, columns=category, values=value).fillna(0)
+
+#     # Sort columns alphabetically for consistency
+#     pivot_df = pivot_df.sort_index(axis=1)
+
+#     # Create a nice default title if not provided
+#     if not title:
+#         title = f"Change in {value.title()} over Time by {category.title()}"
+
+#     # Create the bar chart race
+#     bcr.bar_chart_race(
+#         df=pivot_df,
+#         n_bars=n_bars,
+#         sort='desc',
+#         title=title,
+#         filename=filename,
+#         filter_column_colors=True,
+#         steps_per_period=10,
+#         period_length=800,
+#         interpolate_period=False,
+#         cmap='Set2',  # colorful yet readable palette
+#         bar_size=.95,
+#         figsize=(6, 4),
+#         period_label={'x': .95, 'y': .15, 'ha': 'right', 'va': 'center'},
+#         period_summary_func=lambda v, r: {'x': .99, 'y': .05,
+#                                           's': f'Total = {v.sum():,.0f}',
+#                                           'ha': 'right', 'size': 8},
+#         shared_fontdict={'family': 'Arial', 'weight': 'bold', 'color': 'gray'}
+#     )
+
+#     print(f"✅ Bar chart race saved as: {filename}")
