@@ -1,3 +1,8 @@
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+import re
+
 def generate_boxplot(df,cat,val,outlier=True): # John
 
     # INPUTS:
@@ -1412,6 +1417,282 @@ def plot_top_countries_by_type(df, top_n): # Aditya
     axes[1].set_title(f"Top {top_n} Countries by Number of TV Shows", fontsize=14)
     axes[1].set_xlabel("Country")
     axes[1].tick_params(axis='x', rotation=90)
+
+    plt.tight_layout()
+    plt.show()
+
+
+    
+
+def plot_category_frequency_by_country(df, top_n): #Aditya
+    """
+    Plots category frequency per country (Movies and TV Shows separately)
+    using a Netflix-style dark theme.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame containing at least 'country', 'type', 'category', and 'show_id'.
+    top_n : int, optional
+        Number of top countries to display.
+    """
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    # --- Validate columns ---
+    required_cols = {'country', 'type', 'category', 'show_id'}
+    if not required_cols.issubset(df.columns):
+        raise ValueError(f"DataFrame must contain columns: {required_cols}")
+
+    # --- Clean data ---
+    df = df.dropna(subset=['country', 'type', 'category', 'show_id'])
+
+    # --- Group by country, type, and category ---
+    country_category_counts = (
+        df.groupby(['country', 'type', 'category'])['show_id']
+          .nunique()
+          .reset_index(name='count')
+    )
+
+    # --- Select top N countries by total show count ---
+    top_countries = (
+        df.groupby('country')['show_id']
+          .nunique()
+          .sort_values(ascending=False)
+          .head(top_n)
+          .index
+    )
+
+    filtered = country_category_counts[country_category_counts['country'].isin(top_countries)]
+
+    # --- Split by type ---
+    movies = filtered[filtered['type'].str.lower() == 'movie']
+    tvshows = filtered[filtered['type'].str.lower() == 'tv show']
+
+    # --- Netflix-style color palette ---
+    netflix_palette = ['#E50914', "#970000", '#b81d24', '#f5f5f1', '#737373']
+
+    # --- Apply dark theme ---
+    sns.set_theme(style="darkgrid", rc={'axes.facecolor': "#FFFDFD", 'figure.facecolor': '#141414'})
+    
+    # --- Create Subplots ---
+    fig, axes = plt.subplots(2, 1, figsize=(14, 14), sharex=True)
+
+    # --- Movies Plot ---
+    sns.barplot(
+        data=movies,
+        x='country',
+        y='count',
+        hue='category',
+        palette=netflix_palette,
+        ax=axes[0]
+    )
+    axes[0].set_title("🎬 Category Frequency per Country (Movies)", fontsize=14, color='white')
+    axes[0].set_xlabel("")
+    axes[0].set_ylabel("Number of Unique Movies", color='white')
+    axes[0].tick_params(axis='x', rotation=45, colors='white')
+    axes[0].tick_params(axis='y', colors='white')
+    axes[0].legend(title='Category', bbox_to_anchor=(1.05, 1), loc='upper left', facecolor='#141414', labelcolor='white')
+
+    # --- TV Shows Plot ---
+    sns.barplot(
+        data=tvshows,
+        x='country',
+        y='count',
+        hue='category',
+        palette=netflix_palette,
+        ax=axes[1]
+    )
+    axes[1].set_title("📺 Category Frequency per Country (TV Shows)", fontsize=14, color='white')
+    axes[1].set_xlabel("Country", color='white')
+    axes[1].set_ylabel("Number of Unique TV Shows", color='white')
+    axes[1].tick_params(axis='x', rotation=45, colors='white')
+    axes[1].tick_params(axis='y', colors='white')
+    axes[1].legend(title='Category', bbox_to_anchor=(1.05, 1), loc='upper left', facecolor='#141414', labelcolor='white')
+
+    # --- Final Touches ---
+    plt.tight_layout()
+    plt.show()
+
+def plot_top_countries_by_type(df, top_n): # Aditya
+    """
+    Plots the top N countries by the number of Movies and TV Shows.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame containing at least the columns: 'country', 'type', 'show_id'.
+    top_n : int, optional
+    """
+
+    # --- Group by country and type ---
+    country_type_counts = (
+        df.groupby(['country', 'type'])['show_id']
+          .nunique()
+          .reset_index(name='count')
+    )
+
+    # --- Separate for Movies and TV Shows ---
+    top_movies = (
+        country_type_counts[country_type_counts['type'].str.lower() == 'movie']
+        .sort_values('count', ascending=False)
+        .head(top_n)
+    )
+
+    top_tvshows = (
+        country_type_counts[country_type_counts['type'].str.lower() == 'tv show']
+        .sort_values('count', ascending=False)
+        .head(top_n)
+    )
+
+    # --- Plot ---
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+    # Movies Plot
+    axes[0].bar(top_movies['country'], top_movies['count'], color='skyblue')
+    axes[0].set_title(f"Top {top_n} Countries by Number of Movies", fontsize=14)
+    axes[0].set_xlabel("Country")
+    axes[0].set_ylabel("Number of Unique Movies")
+    axes[0].tick_params(axis='x', rotation=90)
+
+    # TV Shows Plot
+    axes[1].bar(top_tvshows['country'], top_tvshows['count'], color='lightgreen')
+    axes[1].set_title(f"Top {top_n} Countries by Number of TV Shows", fontsize=14)
+    axes[1].set_xlabel("Country")
+    axes[1].tick_params(axis='x', rotation=90)
+
+    plt.tight_layout()
+    plt.show()
+
+def plot_avg_movie_duration_by_country(df, top_n): # Aditya
+    """
+    Plots the average runtime of movies per country using a Netflix-inspired theme.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing at least ['country', 'type', 'duration'] columns.
+        'duration' should contain strings like '90 min'.
+    top_n : int, optional
+        Number of top countries to show.
+    """
+
+
+
+   # --- Step 1: Filter for Movies only ---
+    movies_df = df[df['type'].str.lower() == 'movie'].copy()
+
+    # --- Step 2: Convert 'duration' (like '90 min') to numeric minutes ---
+    movies_df['duration_minutes'] = (
+        movies_df['duration']
+        .astype(str)
+        .apply(lambda x: int(re.findall(r'\d+', x)[0]) if re.findall(r'\d+', x) else None)
+    )
+
+    # Drop missing or invalid duration rows
+    movies_df = movies_df.dropna(subset=['duration_minutes'])
+
+    # --- Step 3: Ensure uniqueness (country + show_id) ---
+    movies_df = movies_df.drop_duplicates(subset=['country', 'show_id'])
+
+    # --- Step 4: Compute average duration per country ---
+    avg_duration = (
+        movies_df.groupby('country')['duration_minutes']
+        .mean()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+
+    # --- Step 5: Take top N countries ---
+    top_countries = avg_duration.head(top_n)
+
+    # --- Step 6: Netflix-inspired palette ---
+    netflix_palette = ['#E50914', '#b81d24', '#221f1f', '#737373', '#7c0f00']
+
+    # --- Step 7: Plot ---
+    sns.set_theme(style="whitegrid", rc={'axes.facecolor': 'white', 'figure.facecolor': 'white'})
+
+    plt.figure(figsize=(12, 6))
+    sns.barplot(
+        data=top_countries,
+        x='country',
+        y='duration_minutes',
+        palette=netflix_palette
+    )
+
+    # --- Step 8: Customize ---
+    plt.title("Average Movie Duration by Country", fontsize=16, color='#E50914', weight='bold')
+    plt.xlabel("Country", fontsize=12, color='black')
+    plt.ylabel("Average Duration (minutes)", fontsize=12, color='black')
+    plt.xticks(rotation=75, ha='right', color='black')
+    plt.yticks(color='black')
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_avg_seasons_by_country(df, top_n): #Aditya
+    """
+    Plots the average number of TV show seasons per country using a Netflix-inspired palette.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing at least ['show_id', 'country', 'type', 'duration'] columns.
+        'duration' should contain strings like '1 Season' or '2 Seasons'.
+    top_n : int, optional
+        Number of top countries to display in the bar plot.
+    """
+
+    # --- Step 1: Keep unique shows only ---
+    df_unique = df.drop_duplicates(subset=['show_id']).copy()
+
+    # --- Step 2: Filter for TV Shows only ---
+    tv_df = df_unique[df_unique['type'].str.lower() == 'tv show'].copy()
+
+    # --- Step 3: Extract numeric season counts ---
+    tv_df['seasons'] = (
+        tv_df['duration']
+        .astype(str)
+        .apply(lambda x: int(re.findall(r'\d+', x)[0]) if re.findall(r'\d+', x) else None)
+    )
+
+    # Drop rows without valid season info or country
+    tv_df = tv_df.dropna(subset=['seasons', 'country'])
+
+    # --- Step 4: Compute average seasons per country ---
+    avg_seasons = (
+        tv_df.groupby('country')['seasons']
+        .mean()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+
+    # --- Step 5: Select top N countries ---
+    top_countries = avg_seasons.head(top_n)
+
+    # --- Step 6: Netflix-inspired palette ---
+    netflix_palette = ['#E50914', '#b81d24', '#221f1f', '#737373', "#7c0f00"]
+
+    # --- Step 7: Plot setup ---
+    sns.set_theme(style="whitegrid", rc={'axes.facecolor': 'white', 'figure.facecolor': 'white'})
+
+    plt.figure(figsize=(12, 6))
+    sns.barplot(
+        data=top_countries,
+        x='country',
+        y='seasons',
+        palette=netflix_palette
+    )
+
+    # --- Step 8: Styling ---
+    plt.title("Average Number of TV Show Seasons by Country", fontsize=16, color='#E50914', weight='bold')
+    plt.xlabel("Country", fontsize=12, color='black')
+    plt.ylabel("Average Number of Seasons", fontsize=12, color='black')
+    plt.xticks(rotation=90, ha='right', color='black')
+    plt.yticks(color='black')
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
 
     plt.tight_layout()
     plt.show()
