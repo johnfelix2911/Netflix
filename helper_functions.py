@@ -1696,3 +1696,149 @@ def plot_avg_seasons_by_country(df, top_n): #Aditya
 
     plt.tight_layout()
     plt.show()
+
+
+def plot_avg_seasons_by_country(df, top_n): #Aditya
+    """
+    Plots the average number of TV show seasons per country using a Netflix-inspired palette.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing at least ['show_id', 'country', 'type', 'duration'] columns.
+        'duration' should contain strings like '1 Season' or '2 Seasons'.
+    top_n : int, optional
+        Number of top countries to display in the bar plot.
+    """
+
+    # --- Step 1: Keep unique shows only ---
+    df_unique = df.drop_duplicates(subset=['show_id']).copy()
+
+    # --- Step 2: Filter for TV Shows only ---
+    tv_df = df_unique[df_unique['type'].str.lower() == 'tv show'].copy()
+
+    # --- Step 3: Extract numeric season counts ---
+    tv_df['seasons'] = (
+        tv_df['duration']
+        .astype(str)
+        .apply(lambda x: int(re.findall(r'\d+', x)[0]) if re.findall(r'\d+', x) else None)
+    )
+
+    # Drop rows without valid season info or country
+    tv_df = tv_df.dropna(subset=['seasons', 'country'])
+
+    # --- Step 4: Compute average seasons per country ---
+    avg_seasons = (
+        tv_df.groupby('country')['seasons']
+        .mean()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+
+    # --- Step 5: Select top N countries ---
+    top_countries = avg_seasons.head(top_n)
+
+    # --- Step 6: Netflix-inspired palette ---
+    netflix_palette = ['#E50914', '#b81d24', '#221f1f', '#737373', "#7c0f00"]
+
+    # --- Step 7: Plot setup ---
+    sns.set_theme(style="whitegrid", rc={'axes.facecolor': 'white', 'figure.facecolor': 'white'})
+
+    plt.figure(figsize=(12, 6))
+    sns.barplot(
+        data=top_countries,
+        x='country',
+        y='seasons',
+        palette=netflix_palette
+    )
+
+    # --- Step 8: Styling ---
+    plt.title("Average Number of TV Show Seasons by Country", fontsize=16, color='#E50914', weight='bold')
+    plt.xlabel("Country", fontsize=12, color='black')
+    plt.ylabel("Average Number of Seasons", fontsize=12, color='black')
+    plt.xticks(rotation=90, ha='right', color='black')
+    plt.yticks(color='black')
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_movie_coproduction_heatmap(df, top_n): # Aditya
+    """
+    Plots a Netflix-themed heatmap showing how many unique movies 
+    are shared (co-produced) between pairs of countries.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing ['show_id', 'type', 'country'] columns.
+        Each (show_id, country) pair represents one country’s involvement in a movie.
+    top_n : int
+        Number of top countries (by unique movie count) to display.
+    """
+
+    # --- Step 1: Filter only Movies ---
+    movies_df = df[df['type'].str.lower() == 'movie'].copy()
+
+    # --- Step 2: Get top countries by number of unique movies ---
+    top_countries = (
+        movies_df.groupby('country')['show_id']
+        .nunique()
+        .sort_values(ascending=False)
+        .head(top_n)
+        .index
+    )
+
+    # --- Step 3: Keep only those top countries ---
+    movies_df = movies_df[movies_df['country'].isin(top_countries)]
+
+    # --- Step 4: Build co-production matrix ---
+    pairs_count = {}
+
+    # For each show_id, get all countries involved
+    for show_id, group in movies_df.groupby('show_id'):
+        countries = sorted(group['country'].unique())
+        # Create all combinations of country pairs for that show_id
+        for c1, c2 in itertools.combinations(countries, 2):
+            pairs_count[(c1, c2)] = pairs_count.get((c1, c2), 0) + 1
+
+    # --- Step 5: Create symmetric matrix (DataFrame) ---
+    matrix = pd.DataFrame(0, index=top_countries, columns=top_countries)
+
+    for (c1, c2), count in pairs_count.items():
+        matrix.loc[c1, c2] += count
+        matrix.loc[c2, c1] += count
+
+    # Diagonal entries = unique movies per country
+    solo_counts = movies_df.groupby('country')['show_id'].nunique()
+    for c in top_countries:
+        matrix.loc[c, c] = solo_counts.get(c, 0)
+
+    # --- Step 6: Plot Heatmap (Netflix style) ---
+    sns.set_theme(style="white")
+    plt.figure(figsize=(20, 16))
+    netflix_red = "#E50914"
+    netflix_palette = sns.color_palette(["#000000", netflix_red, "#B81D24"])
+
+    sns.heatmap(
+        matrix,
+        cmap=netflix_palette,
+        annot=True,
+        fmt=".0f",
+        linewidths=0.5,
+        cbar_kws={'label': 'Number of Shared Unique Movies'}
+    )
+
+    plt.title(
+        "Netflix Co-Production Heatmap: Shared Unique Movies Between Countries",
+        fontsize=16,
+        color=netflix_red,
+        weight='bold'
+    )
+    plt.xlabel("Country", fontsize=12)
+    plt.ylabel("Country", fontsize=12)
+    plt.xticks(rotation=75, ha='right')
+    plt.yticks(rotation=0)
+    plt.tight_layout()
+    plt.show()
