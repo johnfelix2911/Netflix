@@ -1285,3 +1285,81 @@ def plot_entropy(entropy_df, entity_col, top_n=10):#Taniya
     plt.ylabel(entity_col.title())
     plt.tight_layout()
     plt.show()
+
+
+def plot_top_countries_by_shows(df, top_n=20): # Aditya
+    """
+    Plots the top N countries by the number of unique shows.
+
+    Parameters:
+        df (pd.DataFrame): The input DataFrame containing 'country' and 'show_id' columns.
+        top_n (int): Number of top countries to display (default=20)
+    """
+    # Count unique show_id for each country
+    import matplotlib.pyplot as plt
+    country_counts = (
+        df.groupby('country')['show_id']
+        .nunique()
+        .sort_values(ascending=False)
+    )
+
+    # Plot top N countries
+    plt.figure(figsize=(12, 6))
+    country_counts.head(top_n).plot(kind='bar', color='skyblue')
+
+    plt.title(f"Top {top_n} Countries by Number of Unique Shows", fontsize=14)
+    plt.xlabel("Country")
+    plt.ylabel("Number of Unique Shows")
+    plt.xticks(rotation=45, ha='right')
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.show()
+
+def plot_category_frequency_per_country(df, top_n=20): # Aditya
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    """
+    Plots the frequency of each category per country using unique show IDs.
+    
+    Parameters:
+        df (pd.DataFrame): DataFrame containing 'country', 'category', and 'show_id' columns.
+        top_n (int): Number of top countries (by number of unique shows) to include in the plot. Default is 20.
+    """
+    # Count frequency of each category per country using unique show IDs
+    country_category_counts = (
+        df.groupby(['country', 'category'])['show_id']
+          .nunique()
+          .reset_index(name='count')
+    )
+
+    # Focus on top N countries with most shows
+    top_countries = (
+        df.groupby('country')['show_id']
+          .nunique()
+          .sort_values(ascending=False)
+          .head(top_n)
+          .index
+    )
+
+    filtered = country_category_counts[country_category_counts['country'].isin(top_countries)]
+
+    # Sort countries by total count (for better visual order)
+    filtered['country'] = pd.Categorical(filtered['country'], categories=top_countries, ordered=True)
+
+    # Plot
+    plt.figure(figsize=(14, 8))
+    sns.barplot(
+        data=filtered,
+        x='country',
+        y='count',
+        hue='category',
+        palette='tab10'
+    )
+
+    plt.title("Category Frequency per Country", fontsize=14)
+    plt.xlabel("Country")
+    plt.ylabel("Number of Unique Shows")
+    plt.legend(title='Category', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
