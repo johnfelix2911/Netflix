@@ -568,3 +568,44 @@ def generate_interactive_scatter(df, x, y, color=None, hover=None): # John
 #     )
 
 #     print(f"✅ Bar chart race saved as: {filename}")
+def generate_line_chart( #Daksh
+    s,
+    *,
+    title="Content Added Over Time",
+    xlabel="Month",
+    ylabel="Number of Titles Added",
+    figsize=(10, 5),
+    marker=".",
+    color="red", 
+    markerfacecolor="black",
+    markeredgecolor="black",
+    grid_alpha=0.3,
+):
+    """
+    Plot a time-series of content volume.
+    Expects a pandas Series with a datetime-like index (e.g. year_month) and counts as values.
+    Inputs:-
+    1)s : pd.Series
+        Series with datetime-like index and counts as values.
+    2)title : string
+        Title of the line chart.
+    3)xlabel : string
+        Label for the x-axis.
+    4)ylabel : string
+        Label for the y-axis.
+    """
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import numpy as np
+    import seaborn as sns
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.plot(
+        s.index, s.values, marker=marker,color=color,markerfacecolor=markerfacecolor,
+        markeredgecolor=markeredgecolor
+        )
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.grid(True, alpha=grid_alpha)
+    fig.tight_layout()
+    plt.show()
