@@ -1251,6 +1251,7 @@ def compute_entropy(df, entity_col, category_col):#Taniya
     entropy_df = entropy_df.merge(num_records, on=entity_col, how='left')
 
     return entropy_df.sort_values(by='entropy', ascending=False)
+
 def plot_entropy(entropy_df, entity_col, top_n=10):#Taniya
     """
     Plots top and bottom N entities based on entropy (diversity).
@@ -1287,13 +1288,13 @@ def plot_entropy(entropy_df, entity_col, top_n=10):#Taniya
     plt.show()
 
 
-def plot_top_countries_by_shows(df, top_n=20): # Aditya
+def plot_top_countries_by_shows(df, top_n): # Aditya
     """
     Plots the top N countries by the number of unique shows.
 
     Parameters:
         df (pd.DataFrame): The input DataFrame containing 'country' and 'show_id' columns.
-        top_n (int): Number of top countries to display (default=20)
+        top_n (int): Number of top countries to display
     """
     # Count unique show_id for each country
     import matplotlib.pyplot as plt
@@ -1315,7 +1316,7 @@ def plot_top_countries_by_shows(df, top_n=20): # Aditya
     plt.tight_layout()
     plt.show()
 
-def plot_category_frequency_per_country(df, top_n=20): # Aditya
+def plot_category_frequency_per_country(df, top_n): # Aditya
     import seaborn as sns
     import matplotlib.pyplot as plt
     """
@@ -1323,7 +1324,7 @@ def plot_category_frequency_per_country(df, top_n=20): # Aditya
     
     Parameters:
         df (pd.DataFrame): DataFrame containing 'country', 'category', and 'show_id' columns.
-        top_n (int): Number of top countries (by number of unique shows) to include in the plot. Default is 20.
+        top_n (int): Number of top countries (by number of unique shows) to include in the plot.
     """
     # Count frequency of each category per country using unique show IDs
     country_category_counts = (
@@ -1361,5 +1362,56 @@ def plot_category_frequency_per_country(df, top_n=20): # Aditya
     plt.ylabel("Number of Unique Shows")
     plt.legend(title='Category', bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_top_countries_by_type(df, top_n): # Aditya
+    """
+    Plots the top N countries by the number of Movies and TV Shows.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame containing at least the columns: 'country', 'type', 'show_id'.
+    top_n : int, optional
+    """
+    import matplotlib.pyplot as plt
+    # --- Group by country and type ---
+    country_type_counts = (
+        df.groupby(['country', 'type'])['show_id']
+          .nunique()
+          .reset_index(name='count')
+    )
+
+    # --- Separate for Movies and TV Shows ---
+    top_movies = (
+        country_type_counts[country_type_counts['type'].str.lower() == 'movie']
+        .sort_values('count', ascending=False)
+        .head(top_n)
+    )
+
+    top_tvshows = (
+        country_type_counts[country_type_counts['type'].str.lower() == 'tv show']
+        .sort_values('count', ascending=False)
+        .head(top_n)
+    )
+
+    # --- Plot ---
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+    # Movies Plot
+    axes[0].bar(top_movies['country'], top_movies['count'], color='skyblue')
+    axes[0].set_title(f"Top {top_n} Countries by Number of Movies", fontsize=14)
+    axes[0].set_xlabel("Country")
+    axes[0].set_ylabel("Number of Unique Movies")
+    axes[0].tick_params(axis='x', rotation=90)
+
+    # TV Shows Plot
+    axes[1].bar(top_tvshows['country'], top_tvshows['count'], color='lightgreen')
+    axes[1].set_title(f"Top {top_n} Countries by Number of TV Shows", fontsize=14)
+    axes[1].set_xlabel("Country")
+    axes[1].tick_params(axis='x', rotation=90)
+
     plt.tight_layout()
     plt.show()
