@@ -1510,5 +1510,4 @@ def generate_styled_boxplot(df, cat, val, outlier=True): # Taniya
     plt.ylabel(val, fontsize=14, color="white")
     plt.title("Boxplot of "+val+" by "+cat+" (Sorted by Median)", fontsize=16, color="white")
     plt.yticks(fontsize=12, color="white")
-
     plt.show()
