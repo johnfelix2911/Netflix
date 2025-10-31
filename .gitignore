@@ -55,3 +55,4 @@ htmlcov/
 # folders to ve ignored
 Data/
 "content_creator_analysis.py"
+"final_cleaned_main.csv"
