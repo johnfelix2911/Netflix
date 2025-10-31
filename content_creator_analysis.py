@@ -42,13 +42,13 @@ print("\n===== STEP 3: CONTENT CREATOR ANALYSIS =====")
 # --- 3.1 Most Prolific Directors ---
 top_directors = get_top_creators(df, "director", n=20)
 print("\n🎬 Top 10 Directors:\n", top_directors.head(10))
-plot_top_creators(top_directors, "Top 20 Most Prolific Directors on Netflix", color='skyblue')
+plot_top_creators(top_directors, "Top 20 Most Prolific Directors on Netflix")
 top_directors.to_csv("outputs/top_directors.csv")
 
 # --- 3.2 Most Frequent Actors ---
 top_actors = get_top_creators(df, "cast", n=20)
 print("\n⭐ Top 10 Actors:\n", top_actors.head(10))
-plot_top_creators(top_actors, "Top 20 Most Frequent Actors on Netflix", color='orange')
+plot_top_creators(top_actors, "Top 20 Most Frequent Actors on Netflix")
 top_actors.to_csv("outputs/top_actors.csv")
 
 # --- 3.3 Director–Actor Collaboration Network ---
@@ -85,19 +85,6 @@ import os
 os.makedirs("outputs", exist_ok=True)
 matrix.to_csv("outputs/director_genre_matrix.csv", index=True)
 print("✅ Director–Genre matrix successfully saved to 'outputs/director_genre_matrix.csv'.")
-
-# print("\n🎭 Creating Director–Genre specialization heatmap...")
-# matrix = director_genre_matrix(df, min_titles=3)
-# from helper_functions import plot_heatmap
-
-# plot_heatmap(director_genre_matrix, 
-#              row_label="Director", 
-#              col_label="Genre", 
-#              top_rows=15, 
-#              title="Director–Genre Specialization Map")
-
-# matrix.to_csv("outputs/director_genre_matrix.csv")
-# print("Director–Genre matrix saved.")
 
 # --- 4.2 Creator Timelines (Yearly Trends) ---
 print("\n📅 Plotting director timeline trends...")
@@ -142,7 +129,6 @@ else:
 # Optional visualization
 plot_chi_square_heatmap(contingency, var1_name="Director", var2_name="Rating", top_n=10)
 print("\n===== STEP 5.4: ENTROPY (CREATOR SPECIALIZATION) =====")
-from helper_functions import compute_entropy, plot_entropy
 
 # Compute specialization for directors across genres
 entropy_df = compute_entropy(df, entity_col='director', category_col='listed_in')
@@ -150,8 +136,8 @@ entropy_df = compute_entropy(df, entity_col='director', category_col='listed_in'
 print("\n📊 Sample (Top 5 Most Diverse Directors):")
 print(entropy_df.head(5))
 
-print("\n📊 Sample (Top 5 Most Specialized Directors):")
-print(entropy_df.tail(5))
+# print("\n📊 Sample (Top 5 Most Specialized Directors):")
+# print(entropy_df.tail(5))
 
 # Plot both views
 plot_entropy(entropy_df, entity_col='director', top_n=10)
