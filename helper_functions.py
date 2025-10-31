@@ -1,3 +1,8 @@
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+import re
+
 def generate_boxplot(df,cat,val,outlier=True): # John
 
     # INPUTS:
@@ -13,6 +18,7 @@ def generate_boxplot(df,cat,val,outlier=True): # John
     import seaborn as sns
     import pandas as pd
     import numpy as np
+    import sklearn
     # computes median value per genre
     genre_medians = df.groupby(cat)[val].median().sort_values(ascending=False)
     
@@ -646,8 +652,7 @@ def chi_square_test(df, col1, col2):#Taniya
     chi2, p, dof, expected = chi2_contingency(contingency)
 
     return chi2, p, dof, contingency
-
-def plot_chi_square_heatmap(contingency, var1_name="Variable 1", var2_name="Variable 2", top_n=10):  # Taniya
+def plot_chi_square_heatmap(contingency, var1_name="Variable 1", var2_name="Variable 2", top_n=10):#Taniya
     """
     Plots a heatmap for the top N categories from a Chi-Square contingency table.
 
@@ -662,60 +667,35 @@ def plot_chi_square_heatmap(contingency, var1_name="Variable 1", var2_name="Vari
     """
     import seaborn as sns
     import matplotlib.pyplot as plt
-    import matplotlib as mpl
 
     # Take top N categories by row totals for clarity
     top_rows = contingency.sum(axis=1).sort_values(ascending=False).head(top_n).index
     subset = contingency.loc[top_rows]
 
-    # Create Netflix-style red gradient colormap
-    netflix_cmap = mpl.colors.LinearSegmentedColormap.from_list(
-        "netflix_red",
-        ["#221F1F", "#8B0000", "#E50914"]
-    )
-
     plt.figure(figsize=(10, 6))
-    sns.heatmap(
-        subset,
-        cmap=netflix_cmap,
-        annot=True,
-        fmt='d',
-        linewidths=0.5,
-        cbar_kws={"label": "Frequency"},
-        annot_kws={"color": "white", "fontsize": 10}
-    )
-
-    # Netflix-inspired styling
-    plt.title(f"{var1_name} vs {var2_name} Distribution (Top {top_n})",
-              fontsize=15, color="#E50914", fontweight="bold", pad=15)
-    plt.xlabel(var2_name, fontsize=12, color="white")
-    plt.ylabel(var1_name, fontsize=12, color="white")
-
-    plt.gca().set_facecolor("#141414")
-    plt.gcf().patch.set_facecolor("#141414")
-    plt.xticks(color="white", rotation=45, ha="right")
-    plt.yticks(color="white")
-
+    sns.heatmap(subset, cmap='YlGnBu', annot=True, fmt='d')
+    plt.title(f"{var1_name} vs {var2_name} Distribution (Top {top_n})", fontsize=14)
+    plt.xlabel(var2_name)
+    plt.ylabel(var1_name)
     plt.tight_layout()
     plt.show()
-
 def anova_test(df, group_col, value_col):#Taniya
-    # """
-    # Performs a one-way ANOVA test to determine whether the mean of a continuous 
-    # variable differs significantly across groups.
+    """
+    Performs a one-way ANOVA test to determine whether the mean of a continuous 
+    variable differs significantly across groups.
 
-    # INPUTS:
-    #     df (pandas.DataFrame) -> Dataset containing categorical and continuous columns
-    #     group_col (str) -> Column name for the categorical variable (e.g., 'director')
-    #     value_col (str) -> Column name for the continuous variable (e.g., 'duration')
+    INPUTS:
+        df (pandas.DataFrame) -> Dataset containing categorical and continuous columns
+        group_col (str) -> Column name for the categorical variable (e.g., 'director')
+        value_col (str) -> Column name for the continuous variable (e.g., 'duration')
 
-    # RETURNS:
-    #     F-statistic (float), p-value (float)
+    RETURNS:
+        F-statistic (float), p-value (float)
 
-    # PURPOSE:
-    #     Tests whether the average of a numeric column (e.g., duration) 
-    #     differs significantly across categories (e.g., directors).
-    # """
+    PURPOSE:
+        Tests whether the average of a numeric column (e.g., duration) 
+        differs significantly across categories (e.g., directors).
+    """
     import pandas as pd
     from scipy.stats import f_oneway
 
@@ -825,54 +805,29 @@ def get_top_creators(df, column, n=20):#Taniya
     subset = df[df[column].str.lower() != 'unknown']
     top_creators = subset[column].value_counts().head(n)
     return top_creators
+def plot_top_creators(series, title, color='steelblue'):#Taniya
+    # """
+    # INPUTS:
+    #     series (pandas.Series) -> Index = creator names; values = counts.
+    #     title (str)            -> Chart title.
+    #     color (str, optional)  -> Bar color (default = 'steelblue').
 
-def plot_top_creators(series, title):  # Taniya
-    """
-    Visualizes top creators by count using a horizontal bar chart
-    with a Netflix-themed red gradient.
+    # RETURNS:
+    #     None (displays the bar plot).
 
-    INPUTS:
-        series (pandas.Series) -> Index = creator names; values = counts.
-        title (str)            -> Chart title.
-
-    RETURNS:
-        None (displays the bar plot)
-    """
+    # PURPOSE:
+    #     Visualizes top creators by count using a horizontal bar chart.
+    # """
+    import seaborn as sns
     import matplotlib.pyplot as plt
-    import numpy as np
-    import matplotlib as mpl
 
-    # Netflix red gradient colormap (dark → bright red)
-    cmap = mpl.colors.LinearSegmentedColormap.from_list(
-        "netflix_red", ["#8B0000", "#E50914"]
-    )
-
-    # Normalize bar values to the colormap range
-    norm = mpl.colors.Normalize(vmin=min(series.values), vmax=max(series.values))
-    colors = cmap(norm(series.values))
-
-    # Plot bars
     plt.figure(figsize=(10, 6))
-    bars = plt.barh(series.index, series.values, color=colors)
-
-    # Title & labels
-    plt.title(title, fontsize=15, color="#E50914", fontweight="bold")
-    plt.xlabel("Number of Titles", color="white", fontsize=12)
-    plt.ylabel("", color="white")
-    plt.gca().invert_yaxis()  # Highest value at top
-    plt.grid(axis='x', linestyle='--', alpha=0.3, color='gray')
-
-    # Netflix dark background
-    plt.gca().set_facecolor("#141414")
-    plt.gcf().patch.set_facecolor("#141414")
-
-    # Make axis tick labels white
-    plt.xticks(color="white", fontsize=10)
-    plt.yticks(color="white", fontsize=10)
-
+    sns.barplot(x=series.values, y=series.index, color=color)
+    plt.title(title, fontsize=15)
+    plt.xlabel("Number of Titles")
+    plt.ylabel("")
     plt.tight_layout()
     plt.show()
-
 def build_collaboration_network(df):#Taniya
     # """
     # INPUTS:
@@ -892,94 +847,120 @@ def build_collaboration_network(df):#Taniya
     G = nx.from_pandas_edgelist(valid_df, source='director', target='cast')
     return G
 
+def plot_network(G, max_nodes=150):#Taniya
+    """
+    INPUTS:
+        G (networkx.Graph) -> Collaboration network from build_collaboration_network().
+        max_nodes (int)    -> Maximum nodes to show (default = 150).
 
-def plot_network(G, max_nodes=150):  # Taniya
-    # """
-    # INPUTS:
-    #     G (networkx.Graph) -> Collaboration network from build_collaboration_network().
-    #     max_nodes (int)    -> Maximum nodes to show (default = 150).
+    RETURNS:
+        None (displays enhanced bipartite collaboration visualization).
 
-    # RETURNS:
-    #     None (displays Netflix-themed collaboration visualization with visible edges).
-
-    # PURPOSE:
-    #     Visualizes the director–actor network with Netflix-inspired aesthetics:
-    #     - Bright red edges for visibility
-    #     - Red directors, grey-white actors
-    #     - Black cinematic background
-    #     - Node sizes scaled by degree
-    #     - Top collaborators labeled in bright red
-    # """
+    PURPOSE:
+        Improves the director–actor network visualization by:
+        - Coloring directors and actors differently
+        - Scaling node sizes by degree (collaboration frequency)
+        - Using a cleaner spring layout
+    """
     import networkx as nx
     import matplotlib.pyplot as plt
-    import numpy as np
 
     # Limit graph size for readability
     if len(G.nodes) > max_nodes:
         G = G.subgraph(list(G.nodes)[:max_nodes])
 
     plt.figure(figsize=(14, 10))
-    plt.style.use("dark_background")
 
     # Identify directors and actors
     directors = [n for n in G.nodes if ' ' in n and len(n.split()) <= 3]
     actors = list(set(G.nodes) - set(directors))
 
-    # Netflix color palette
-    director_color = "#E50914"  # Netflix red
-    actor_color = "#B3B3B3"     # Muted white-grey
-    edge_color = "#E50914"      # Bright red edges
-
     # Colors and node sizes
-    degrees = dict(G.degree)
-    node_colors = [director_color if n in directors else actor_color for n in G.nodes]
-    node_sizes = [120 + 4 * degrees[n] for n in G.nodes]
+    node_colors = ['skyblue' if n in directors else 'salmon' for n in G.nodes]
+    node_sizes = [100 + 3 * nx.degree(G, n) for n in G.nodes]
 
     # Layout
     pos = nx.spring_layout(G, k=0.3, iterations=40, seed=42)
 
-    # Draw edges — brighter and more visible now
-    nx.draw_networkx_edges(G, pos, edge_color=edge_color, alpha=0.6, width=1.3)
-
-    # Draw nodes
-    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=node_sizes, alpha=0.9, linewidths=0.5)
+    # Draw nodes and edges
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=node_sizes, alpha=0.85)
+    nx.draw_networkx_edges(G, pos, alpha=0.4)
 
     # Label top 10 most connected nodes
     top_nodes = sorted(G.degree, key=lambda x: x[1], reverse=True)[:10]
     label_nodes = [n for n, _ in top_nodes if n in pos]
     labels = {n: n for n in label_nodes}
+    nx.draw_networkx_labels(G, pos, labels=labels, font_size=8, font_color='black')
 
-    nx.draw_networkx_labels(G, pos, labels=labels, font_size=8, font_color="#FF4C4C", font_weight="bold")
-
-    # Style the plot
-    plt.title("🎬 Director–Actor Collaboration Network",
-              fontsize=15, color="#E50914", fontweight="bold", pad=15)
-    plt.gca().set_facecolor("#000000")  # pure black
-    plt.gcf().patch.set_facecolor("#000000")
+    plt.title("Director–Actor Collaboration Network (Enhanced View)", fontsize=14)
     plt.axis("off")
     plt.tight_layout()
     plt.show()
 
-def plot_heatmap(matrix, row_label="Row", col_label="Column", top_rows=15, title=None):  # Taniya
-    """
-    Plots a Netflix-themed heatmap for any 2D pivot table (entity–category relationships).
 
-    INPUTS:
-        matrix (pd.DataFrame) -> Pivot table or cross-tab (rows = entities, columns = categories)
-        row_label (str) -> Label for rows (e.g., 'Director', 'Actor', 'Country')
-        col_label (str) -> Label for columns (e.g., 'Genre', 'Category', 'Rating')
-        top_rows (int) -> Number of top rows (entities) to display (default = 15)
-        title (str or None) -> Custom title; if None, auto-generates one
+# def plot_genre_heatmap(matrix, top_directors=15):#Taniya
+#     """
+#     INPUTS:
+#         matrix (pd.DataFrame) -> Director–Genre pivot table from director_genre_matrix().
+#         top_directors (int)   -> Number of top directors to display (default = 15).
 
-    RETURNS:
-        None (displays the heatmap)
-    """
+#     RETURNS:
+#         None (displays improved heatmap).
+
+#     PURPOSE:
+#         Visualizes directors and the genres they specialize in by showing
+#         the count of titles per genre for each top director.
+#     """
+#     import seaborn as sns
+#     import matplotlib.pyplot as plt
+
+#     # Focus on top directors by total works
+#     top = matrix.sum(axis=1).sort_values(ascending=False).head(top_directors).index
+#     subset = matrix.loc[top]
+
+#     # Sort genres by overall popularity
+#     subset = subset[subset.sum().sort_values(ascending=False).index]
+
+#     plt.figure(figsize=(14, 7))
+#     sns.heatmap(
+#         subset,
+#         cmap="YlOrRd",
+#         linewidths=0.3,
+#         linecolor='white',
+#         cbar_kws={'label': 'Number of Titles'}
+#     )
+#     plt.title("Director–Genre Specialization Map (Top Directors)", fontsize=15)
+#     plt.xlabel("Genre")
+#     plt.ylabel("Director")
+#     plt.xticks(rotation=45, ha="right")
+#     plt.tight_layout()
+#     plt.show()
+def plot_heatmap(matrix, row_label="Row", col_label="Column", top_rows=15, cmap="YlOrRd", title=None):#Taniya
+    # """
+    # Plots a generalized heatmap for any 2D pivot table (entity–category relationships).
+
+    # INPUTS:
+    #     matrix (pd.DataFrame) -> Pivot table or cross-tab (rows = entities, columns = categories)
+    #     row_label (str) -> Label for rows (e.g., 'Director', 'Actor', 'Country')
+    #     col_label (str) -> Label for columns (e.g., 'Genre', 'Category', 'Rating')
+    #     top_rows (int) -> Number of top rows (entities) to display (default = 15)
+    #     cmap (str) -> Color map for heatmap (default = 'YlOrRd')
+    #     title (str or None) -> Custom title; if None, auto-generates one
+
+    # RETURNS:
+    #     None (displays the heatmap)
+
+    # PURPOSE:
+    #     Visualizes relationships between any two categorical dimensions in a dataset.
+    #     Example uses:
+    #     - Director vs Genre specialization
+    #     - Actor vs Genre diversity
+    #     - Country vs Category focus
+    # """
     import seaborn as sns
     import matplotlib.pyplot as plt
-    import matplotlib as mpl
     import pandas as pd
-
-    # Validate input
+    # Validate matrix
     if not isinstance(matrix, pd.DataFrame):
         raise ValueError("Input must be a pandas DataFrame pivot table.")
 
@@ -987,48 +968,26 @@ def plot_heatmap(matrix, row_label="Row", col_label="Column", top_rows=15, title
     top_entities = matrix.sum(axis=1).sort_values(ascending=False).head(top_rows).index
     subset = matrix.loc[top_entities]
 
-    # Sort columns by overall frequency
+    # Sort columns (categories) by overall frequency
     subset = subset[subset.sum().sort_values(ascending=False).index]
 
     # Generate title if not provided
     if title is None:
         title = f"{row_label}–{col_label} Relationship Heatmap (Top {top_rows})"
 
-    # Netflix-style color map
-    netflix_cmap = mpl.colors.LinearSegmentedColormap.from_list(
-        "netflix_red",
-        ["#221F1F", "#8B0000", "#E50914"]
-    )
-
     # Plot
     plt.figure(figsize=(14, 7))
     sns.heatmap(
         subset,
-        cmap=netflix_cmap,
-        linewidths=0.4,
-        linecolor="#2a2a2a",
+        cmap=cmap,
+        linewidths=0.3,
+        linecolor='white',
         cbar_kws={'label': 'Count'},
-        annot=False
     )
-
-    # Dark Netflix background
-    plt.gca().set_facecolor("#141414")
-    plt.gcf().patch.set_facecolor("#141414")
-
-    # Titles and labels
-    plt.title(title, fontsize=16, color="#E50914", fontweight="bold", pad=15)
-    plt.xlabel(col_label, fontsize=12, color="white")
-    plt.ylabel(row_label, fontsize=12, color="white")
-
-    # Axis styling
-    plt.xticks(rotation=45, ha="right", color="white", fontsize=10)
-    plt.yticks(color="white", fontsize=10)
-
-    # Colorbar styling
-    cbar = plt.gca().collections[0].colorbar
-    cbar.ax.yaxis.label.set_color("white")
-    cbar.ax.tick_params(colors="white")
-
+    plt.title(title, fontsize=15)
+    plt.xlabel(col_label)
+    plt.ylabel(row_label)
+    plt.xticks(rotation=45, ha="right")
     plt.tight_layout()
     plt.show()
 
@@ -1054,61 +1013,34 @@ def director_genre_matrix(df, min_titles=3):#Taniya
     pivot = pivot[pivot.sum(axis=1) >= min_titles]
     return pivot
 
-def plot_creator_country_distribution(df, creator_col='director'):  # Taniya
-    """
-    INPUTS:
-        df (pandas.DataFrame)  -> Dataset with 'country' and creator column.
-        creator_col (str)      -> Column to analyze ('director' or 'cast').
 
-    RETURNS:
-        None (displays Netflix-themed bar chart).
 
-    PURPOSE:
-        Shows top countries by count of unique creators to study
-        international vs domestic talent distribution with a Netflix-style aesthetic.
-    """
+
+def plot_creator_country_distribution(df, creator_col='director'):#Taniya
+    # """
+    # INPUTS:
+    #     df (pandas.DataFrame)  -> Dataset with 'country' and creator column.
+    #     creator_col (str)      -> Column to analyze ('director' or 'cast').
+
+    # RETURNS:
+    #     None (displays bar chart).
+
+    # PURPOSE:
+    #     Shows top countries by count of unique creators to study international
+    #     versus domestic talent distribution.
+    # """
     import seaborn as sns
     import matplotlib.pyplot as plt
-    import matplotlib as mpl
 
-    # Prepare data
-    country_counts = (
-        df[['country', creator_col]]
-        .drop_duplicates()
-        .country.value_counts()
-        .head(15)
-    )
+    country_counts = (df[['country', creator_col]]
+                      .drop_duplicates()
+                      .country.value_counts()
+                      .head(15))
 
-    # Netflix red gradient colormap
-    netflix_cmap = mpl.colors.LinearSegmentedColormap.from_list(
-        "netflix_red", ["#8B0000", "#E50914"]
-    )
-    colors = [netflix_cmap(i / (len(country_counts) - 1)) for i in range(len(country_counts))]
-
-    # Plot
     plt.figure(figsize=(8, 6))
-    plt.style.use("dark_background")
-    sns.barplot(
-        x=country_counts.values,
-        y=country_counts.index,
-        palette=colors
-    )
-
-    # Netflix-styled title & labels
-    plt.title("🌍 Top 15 Countries by Creator Count", fontsize=15, color="#E50914", fontweight="bold", pad=15)
-    plt.xlabel("Number of Creators", fontsize=12, color="white")
-    plt.ylabel("", color="white")
-
-    # Backgrounds
-    plt.gca().set_facecolor("#000000")
-    plt.gcf().patch.set_facecolor("#000000")
-
-    # Ticks and spines
-    plt.xticks(color="white")
-    plt.yticks(color="white")
-    for spine in plt.gca().spines.values():
-        spine.set_visible(False)
-
+    sns.barplot(x=country_counts.values, y=country_counts.index, palette="crest")
+    plt.title("Top 15 Countries by Creator Count", fontsize=14)
+    plt.xlabel("Number of Creators")
     plt.tight_layout()
     plt.show()
 
@@ -1179,22 +1111,20 @@ def director_rating_significance(df, val_col='vote_average'):  # Taniya
     else:
         print("\nNo significant pairwise differences found in LSD test.")
 
-    return result
+def plot_international_vs_domestic(df, creator_col='director', home_country='United States'):#Taniya
+    # """
+    # INPUTS:
+    #     df (pandas.DataFrame)  -> Dataset with 'country' and creator column.
+    #     creator_col (str)      -> Column to analyze ('director' or 'cast').
+    #     home_country (str)     -> Country considered "domestic" (default = 'United States').
 
-def plot_international_vs_domestic(df, creator_col='director', home_country='India'):  # Taniya
-    """
-    INPUTS:
-        df (pandas.DataFrame)  -> Dataset with 'country' and creator column.
-        creator_col (str)      -> Column to analyze ('director' or 'cast').
-        home_country (str)     -> Country considered "domestic" (default = 'United States').
+    # RETURNS:
+    #     pandas.DataFrame -> Summary table of domestic vs international creator counts.
 
-    RETURNS:
-        pandas.DataFrame -> Summary table of domestic vs international creator counts.
-
-    PURPOSE:
-        Compares how many unique creators are domestic vs international,
-        using a Netflix-themed red–black visualization to highlight global talent diversity.
-    """
+    # PURPOSE:
+    #     Compares how many unique creators are domestic vs international,
+    #     showing Netflix's global diversity of talent.
+    # """
     import seaborn as sns
     import matplotlib.pyplot as plt
     import pandas as pd
@@ -1212,69 +1142,42 @@ def plot_international_vs_domestic(df, creator_col='director', home_country='Ind
     summary = unique_creators['talent_origin'].value_counts().reset_index()
     summary.columns = ['Talent Type', 'Creator Count']
 
-    # Define Netflix-style colors
-    palette = {
-        'Domestic': '#E50914',       # Netflix red
-        'International': '#B3B3B3'   # Muted grey-white
-    }
-
     # Plot
     plt.figure(figsize=(6, 5))
-    plt.style.use("dark_background")
-    sns.barplot(
-        data=summary,
-        x='Talent Type',
-        y='Creator Count',
-        palette=palette
-    )
-
-    # Title & styling
-    plt.title(
-        f"🌍 International vs Domestic {creator_col.capitalize()}s ({home_country})",
-        fontsize=15,
-        color="#E50914",
-        fontweight="bold",
-        pad=15
-    )
-    plt.xlabel("")
-    plt.ylabel("Number of Unique Creators", fontsize=11, color="white")
-
-    # Backgrounds
-    plt.gca().set_facecolor("#000000")
-    plt.gcf().patch.set_facecolor("#000000")
-
-    # Text & ticks
-    plt.xticks(color="white", fontsize=11)
-    plt.yticks(color="white")
-
-    # Remove borders
-    for spine in plt.gca().spines.values():
-        spine.set_visible(False)
-
+    sns.barplot(data=summary, x='Talent Type', y='Creator Count', palette='Set2')
+    plt.title(f"International vs Domestic {creator_col.capitalize()}s ({home_country})", fontsize=14)
     plt.tight_layout()
     plt.show()
 
     return summary
-
 def plot_cast_frequency_distribution(df):#Taniya
-    
-    # INPUTS:
-    #     df (pandas.DataFrame) -> Dataset with 'cast' column.
+    """
+    INPUTS:
+        df (pandas.DataFrame) -> Dataset with 'cast' column.
 
-    # RETURNS:
-    #     None (displays histogram and optional bubble chart).
+    RETURNS:
+        None (displays histogram and optional bubble chart).
 
-    # PURPOSE:
-    #     Visualizes how frequently actors appear across Netflix titles.
-    #     Helps understand whether a few actors dominate the catalog
-    #     or if the presence is evenly distributed.
-    
+    PURPOSE:
+        Visualizes how frequently actors appear across Netflix titles.
+        Helps understand whether a few actors dominate the catalog
+        or if the presence is evenly distributed.
+    """
     import pandas as pd
     import seaborn as sns
     import matplotlib.pyplot as plt
 
     # Remove 'Unknown' and count frequency
     cast_counts = df[df['cast'].str.lower() != 'unknown']['cast'].value_counts()
+
+    # Histogram of appearances
+    plt.figure(figsize=(8,5))
+    sns.histplot(cast_counts, bins=30, kde=True, color='teal')
+    plt.title("Distribution of Actor Appearances on Netflix", fontsize=14)
+    plt.xlabel("Number of Titles Appeared In")
+    plt.ylabel("Number of Actors")
+    plt.tight_layout()
+    plt.show()
 
     # Optional: Bubble chart of top actors
     top_cast = cast_counts.head(30).reset_index()
@@ -1288,28 +1191,27 @@ def plot_cast_frequency_distribution(df):#Taniya
         size='Appearances',
         sizes=(100, 1000),
         alpha=0.7,
-        color='#E50914'
+        color='coral'
     )
     plt.title("Top 30 Actor Appearance Bubble Chart", fontsize=14)
     plt.xlabel("Number of Titles Appeared In")
     plt.ylabel("Actor")
     plt.tight_layout()
     plt.show()
+def plot_creator_timeline(df, creator_col='director', top_n=5):#Taniya
+    """
+    INPUTS:
+        df (pandas.DataFrame) -> Dataset containing creator names and release years
+        creator_col (str) -> Column to analyze ('director' or 'cast')
+        top_n (int) -> Number of top creators to include in the timeline
 
-def plot_creator_timeline(df, creator_col='director', top_n=5):  # Taniya
-    
-    # INPUTS:
-    #     df (pandas.DataFrame) -> Dataset containing creator names and release years
-    #     creator_col (str) -> Column to analyze ('director' or 'cast')
-    #     top_n (int) -> Number of top creators to include in the timeline
+    RETURNS:
+        None (displays lineplot)
 
-    # RETURNS:
-    #     None (displays lineplot)
-
-    # PURPOSE:
-    #     Visualizes how the content output of top creators changes over time.
-    #     Helps identify career trends and Netflix’s collaborations over years.
-    
+    PURPOSE:
+        Visualizes how the content output of top creators changes over time.
+        Helps identify career trends and Netflix’s collaborations over years.
+    """
     import pandas as pd
     import seaborn as sns
     import matplotlib.pyplot as plt
@@ -1362,23 +1264,23 @@ def plot_creator_timeline(df, creator_col='director', top_n=5):  # Taniya
 
 
 def compute_entropy(df, entity_col, category_col):#Taniya
-    # """
-    # Computes Shannon Entropy for any categorical pair (e.g., Director–Genre, Actor–Genre, Country–Category).
+    """
+    Computes Shannon Entropy for any categorical pair (e.g., Director–Genre, Actor–Genre, Country–Category).
 
-    # INPUTS:
-    #     df (pandas.DataFrame) -> dataset containing both categorical columns
-    #     entity_col (str) -> column name representing the entity (e.g., 'director', 'actor', 'country')
-    #     category_col (str) -> column name representing the category (e.g., 'listed_in', 'genre', 'category')
+    INPUTS:
+        df (pandas.DataFrame) -> dataset containing both categorical columns
+        entity_col (str) -> column name representing the entity (e.g., 'director', 'actor', 'country')
+        category_col (str) -> column name representing the category (e.g., 'listed_in', 'genre', 'category')
 
-    # RETURNS:
-    #     pd.DataFrame -> DataFrame with columns:
-    #                     [entity_col, 'entropy', 'num_records']
+    RETURNS:
+        pd.DataFrame -> DataFrame with columns:
+                        [entity_col, 'entropy', 'num_records']
 
-    # PURPOSE:
-    #     Quantifies specialization or diversity for each entity.
-    #     - Low entropy → specialized in fewer categories
-    #     - High entropy → diversified across many categories
-    # """
+    PURPOSE:
+        Quantifies specialization or diversity for each entity.
+        - Low entropy → specialized in fewer categories
+        - High entropy → diversified across many categories
+    """
     import pandas as pd
     import numpy as np
 
@@ -1414,98 +1316,588 @@ def compute_entropy(df, entity_col, category_col):#Taniya
 
     return entropy_df.sort_values(by='entropy', ascending=False)
 
-def plot_entropy(entropy_df, entity_col, top_n=10):  # Taniya
-    
-    # Plots top and bottom N entities based on entropy (diversity) 
-    # in a Netflix-themed color scheme.
+def plot_entropy(entropy_df, entity_col, top_n=10):#Taniya
+    """
+    Plots top and bottom N entities based on entropy (diversity).
 
-    # INPUTS:
-    #     entropy_df (pd.DataFrame) -> DataFrame returned from compute_entropy()
-    #     entity_col (str) -> entity column name (e.g., 'director', 'actor')
-    #     top_n (int) -> number of top and bottom entities to visualize
+    INPUTS:
+        entropy_df (pd.DataFrame) -> DataFrame returned from compute_entropy()
+        entity_col (str) -> entity column name (e.g., 'director', 'actor')
+        top_n (int) -> number of top and bottom entities to visualize
 
-    # RETURNS:
-    #     None (displays two Netflix-themed bar charts)
-   
+    RETURNS:
+        None (displays two bar charts)
+    """
     import seaborn as sns
     import matplotlib.pyplot as plt
-    import matplotlib as mpl
 
-    # Prepare data
+    # Highest and lowest entropy entities
     top_diverse = entropy_df.head(top_n)
     top_specialized = entropy_df.tail(top_n)
 
-    # Netflix gradients
-    red_gradient = mpl.colors.LinearSegmentedColormap.from_list(
-        "netflix_red", ["#8B0000", "#E50914"]
-    )
-    dark_gradient = mpl.colors.LinearSegmentedColormap.from_list(
-        "netflix_darkred", ["#333333", "#8B0000"]
-    )
-
-    # --- Plot 1: Top Diverse Entities (High Entropy) ---
     plt.figure(figsize=(10, 6))
-    plt.style.use("dark_background")
-    sns.barplot(
-        data=top_diverse,
-        x='entropy',
-        y=entity_col,
-        palette=[red_gradient(i / top_n) for i in range(top_n)]
-    )
-    plt.title(f"🔥 Top {top_n} Most Diverse {entity_col.title()}s (High Entropy)",
-              fontsize=15, color="#E50914", fontweight="bold", pad=15)
-    plt.xlabel("Entropy (Diversity)", fontsize=12, color="white")
-    plt.ylabel(entity_col.title(), fontsize=12, color="white")
-
-    # Style adjustments
-    plt.gca().set_facecolor("#000000")
-    plt.gcf().patch.set_facecolor("#000000")
-    plt.xticks(color="white")
-    plt.yticks(color="white")
-    for spine in plt.gca().spines.values():
-        spine.set_visible(False)
+    sns.barplot(data=top_diverse, x='entropy', y=entity_col, color='skyblue')
+    plt.title(f"Top {top_n} Most Diverse {entity_col.title()}s (High Entropy)")
+    plt.xlabel("Entropy (Diversity)")
+    plt.ylabel(entity_col.title())
     plt.tight_layout()
     plt.show()
 
-def generate_styled_boxplot(df, cat, val, outlier=True): # Taniya
-   
-    # INPUTS:
-    # df (pandas dataframe) -> the dataframe that contains the data
-    # cat (string) -> Name of column. Each category(discrete) gets a boxplot
-    # val (string) -> Name of column. Value(continuous) for which the boxplot is created
-    # outlier (boolean) -> True or False. whether or not the outliers should be plotted (True by default)
+    plt.figure(figsize=(10, 6))
+    sns.barplot(data=top_specialized, x='entropy', y=entity_col, color='salmon')
+    plt.title(f"Top {top_n} Most Specialized {entity_col.title()}s (Low Entropy)")
+    plt.xlabel("Entropy (Diversity)")
+    plt.ylabel(entity_col.title())
+    plt.tight_layout()
+    plt.show()
 
-    # RETURNS
-    # returns nothing as such but it prints the boxplot
 
+def plot_top_countries_by_shows(df, top_n): # Aditya
+    """
+    Plots the top N countries by the number of unique shows.
+
+    Parameters:
+        df (pd.DataFrame): The input DataFrame containing 'country' and 'show_id' columns.
+        top_n (int): Number of top countries to display
+    """
+    # Count unique show_id for each country
     import matplotlib.pyplot as plt
-    import seaborn as sns
-    import pandas as pd
-    import numpy as np
-
-    genre_medians = df.groupby(cat)[val].median().sort_values(ascending=False)
-
-    plt.figure(figsize=(20, 10))
-
-    # Netflix red color
-    netflix_red = '#E50914'
-
-    sns.boxplot(
-        data=df,
-        x=cat,
-        y=val,
-        order=genre_medians.index,   # sort by median
-        showfliers=outlier,
-        boxprops=dict(color=netflix_red),
-        whiskerprops=dict(color=netflix_red),
-        capprops=dict(color=netflix_red),
-        medianprops=dict(color=netflix_red),
-        flierprops=dict(markerfacecolor=netflix_red, markeredgecolor=netflix_red),
+    country_counts = (
+        df.groupby('country')['show_id']
+        .nunique()
+        .sort_values(ascending=False)
     )
 
-    plt.xlabel("", color="white")
-    plt.xticks([], color="white")
-    plt.ylabel(val, fontsize=14, color="white")
-    plt.title("Boxplot of "+val+" by "+cat+" (Sorted by Median)", fontsize=16, color="white")
-    plt.yticks(fontsize=12, color="white")
+    # Plot top N countries
+    plt.figure(figsize=(12, 6))
+    country_counts.head(top_n).plot(kind='bar', color='skyblue')
+
+    plt.title(f"Top {top_n} Countries by Number of Unique Shows", fontsize=14)
+    plt.xlabel("Country")
+    plt.ylabel("Number of Unique Shows")
+    plt.xticks(rotation=45, ha='right')
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.show()
+
+def plot_category_frequency_per_country(df, top_n): # Aditya
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    """
+    Plots the frequency of each category per country using unique show IDs.
+    
+    Parameters:
+        df (pd.DataFrame): DataFrame containing 'country', 'category', and 'show_id' columns.
+        top_n (int): Number of top countries (by number of unique shows) to include in the plot.
+    """
+    # Count frequency of each category per country using unique show IDs
+    country_category_counts = (
+        df.groupby(['country', 'category'])['show_id']
+          .nunique()
+          .reset_index(name='count')
+    )
+
+    # Focus on top N countries with most shows
+    top_countries = (
+        df.groupby('country')['show_id']
+          .nunique()
+          .sort_values(ascending=False)
+          .head(top_n)
+          .index
+    )
+
+    filtered = country_category_counts[country_category_counts['country'].isin(top_countries)]
+
+    # Sort countries by total count (for better visual order)
+    filtered['country'] = pd.Categorical(filtered['country'], categories=top_countries, ordered=True)
+
+    # Plot
+    plt.figure(figsize=(14, 8))
+    sns.barplot(
+        data=filtered,
+        x='country',
+        y='count',
+        hue='category',
+        palette='tab10'
+    )
+
+    plt.title("Category Frequency per Country", fontsize=14)
+    plt.xlabel("Country")
+    plt.ylabel("Number of Unique Shows")
+    plt.legend(title='Category', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_top_countries_by_type(df, top_n): # Aditya
+    """
+    Plots the top N countries by the number of Movies and TV Shows.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame containing at least the columns: 'country', 'type', 'show_id'.
+    top_n : int, optional
+    """
+    import matplotlib.pyplot as plt
+    # --- Group by country and type ---
+    country_type_counts = (
+        df.groupby(['country', 'type'])['show_id']
+          .nunique()
+          .reset_index(name='count')
+    )
+
+    # --- Separate for Movies and TV Shows ---
+    top_movies = (
+        country_type_counts[country_type_counts['type'].str.lower() == 'movie']
+        .sort_values('count', ascending=False)
+        .head(top_n)
+    )
+
+    top_tvshows = (
+        country_type_counts[country_type_counts['type'].str.lower() == 'tv show']
+        .sort_values('count', ascending=False)
+        .head(top_n)
+    )
+
+    # --- Plot ---
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+    # Movies Plot
+    axes[0].bar(top_movies['country'], top_movies['count'], color='skyblue')
+    axes[0].set_title(f"Top {top_n} Countries by Number of Movies", fontsize=14)
+    axes[0].set_xlabel("Country")
+    axes[0].set_ylabel("Number of Unique Movies")
+    axes[0].tick_params(axis='x', rotation=90)
+
+    # TV Shows Plot
+    axes[1].bar(top_tvshows['country'], top_tvshows['count'], color='lightgreen')
+    axes[1].set_title(f"Top {top_n} Countries by Number of TV Shows", fontsize=14)
+    axes[1].set_xlabel("Country")
+    axes[1].tick_params(axis='x', rotation=90)
+
+    plt.tight_layout()
+    plt.show()
+
+
+    
+
+def plot_category_frequency_by_country(df, top_n): #Aditya
+    """
+    Plots category frequency per country (Movies and TV Shows separately)
+    using a Netflix-style dark theme.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame containing at least 'country', 'type', 'category', and 'show_id'.
+    top_n : int, optional
+        Number of top countries to display.
+    """
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    # --- Validate columns ---
+    required_cols = {'country', 'type', 'category', 'show_id'}
+    if not required_cols.issubset(df.columns):
+        raise ValueError(f"DataFrame must contain columns: {required_cols}")
+
+    # --- Clean data ---
+    df = df.dropna(subset=['country', 'type', 'category', 'show_id'])
+
+    # --- Group by country, type, and category ---
+    country_category_counts = (
+        df.groupby(['country', 'type', 'category'])['show_id']
+          .nunique()
+          .reset_index(name='count')
+    )
+
+    # --- Select top N countries by total show count ---
+    top_countries = (
+        df.groupby('country')['show_id']
+          .nunique()
+          .sort_values(ascending=False)
+          .head(top_n)
+          .index
+    )
+
+    filtered = country_category_counts[country_category_counts['country'].isin(top_countries)]
+
+    # --- Split by type ---
+    movies = filtered[filtered['type'].str.lower() == 'movie']
+    tvshows = filtered[filtered['type'].str.lower() == 'tv show']
+
+    # --- Netflix-style color palette ---
+    netflix_palette = ['#E50914', "#970000", '#b81d24', '#f5f5f1', '#737373']
+
+    # --- Apply dark theme ---
+    sns.set_theme(style="darkgrid", rc={'axes.facecolor': "#FFFDFD", 'figure.facecolor': '#141414'})
+    
+    # --- Create Subplots ---
+    fig, axes = plt.subplots(2, 1, figsize=(14, 14), sharex=True)
+
+    # --- Movies Plot ---
+    sns.barplot(
+        data=movies,
+        x='country',
+        y='count',
+        hue='category',
+        palette=netflix_palette,
+        ax=axes[0]
+    )
+    axes[0].set_title("🎬 Category Frequency per Country (Movies)", fontsize=14, color='white')
+    axes[0].set_xlabel("")
+    axes[0].set_ylabel("Number of Unique Movies", color='white')
+    axes[0].tick_params(axis='x', rotation=45, colors='white')
+    axes[0].tick_params(axis='y', colors='white')
+    axes[0].legend(title='Category', bbox_to_anchor=(1.05, 1), loc='upper left', facecolor='#141414', labelcolor='white')
+
+    # --- TV Shows Plot ---
+    sns.barplot(
+        data=tvshows,
+        x='country',
+        y='count',
+        hue='category',
+        palette=netflix_palette,
+        ax=axes[1]
+    )
+    axes[1].set_title("📺 Category Frequency per Country (TV Shows)", fontsize=14, color='white')
+    axes[1].set_xlabel("Country", color='white')
+    axes[1].set_ylabel("Number of Unique TV Shows", color='white')
+    axes[1].tick_params(axis='x', rotation=45, colors='white')
+    axes[1].tick_params(axis='y', colors='white')
+    axes[1].legend(title='Category', bbox_to_anchor=(1.05, 1), loc='upper left', facecolor='#141414', labelcolor='white')
+
+    # --- Final Touches ---
+    plt.tight_layout()
+    plt.show()
+
+def plot_top_countries_by_type(df, top_n): # Aditya
+    """
+    Plots the top N countries by the number of Movies and TV Shows.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame containing at least the columns: 'country', 'type', 'show_id'.
+    top_n : int, optional
+    """
+
+    # --- Group by country and type ---
+    country_type_counts = (
+        df.groupby(['country', 'type'])['show_id']
+          .nunique()
+          .reset_index(name='count')
+    )
+
+    # --- Separate for Movies and TV Shows ---
+    top_movies = (
+        country_type_counts[country_type_counts['type'].str.lower() == 'movie']
+        .sort_values('count', ascending=False)
+        .head(top_n)
+    )
+
+    top_tvshows = (
+        country_type_counts[country_type_counts['type'].str.lower() == 'tv show']
+        .sort_values('count', ascending=False)
+        .head(top_n)
+    )
+
+    # --- Plot ---
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+    # Movies Plot
+    axes[0].bar(top_movies['country'], top_movies['count'], color='skyblue')
+    axes[0].set_title(f"Top {top_n} Countries by Number of Movies", fontsize=14)
+    axes[0].set_xlabel("Country")
+    axes[0].set_ylabel("Number of Unique Movies")
+    axes[0].tick_params(axis='x', rotation=90)
+
+    # TV Shows Plot
+    axes[1].bar(top_tvshows['country'], top_tvshows['count'], color='lightgreen')
+    axes[1].set_title(f"Top {top_n} Countries by Number of TV Shows", fontsize=14)
+    axes[1].set_xlabel("Country")
+    axes[1].tick_params(axis='x', rotation=90)
+
+    plt.tight_layout()
+    plt.show()
+
+def plot_avg_movie_duration_by_country(df, top_n): # Aditya
+    """
+    Plots the average runtime of movies per country using a Netflix-inspired theme.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing at least ['country', 'type', 'duration'] columns.
+        'duration' should contain strings like '90 min'.
+    top_n : int, optional
+        Number of top countries to show.
+    """
+
+
+
+   # --- Step 1: Filter for Movies only ---
+    movies_df = df[df['type'].str.lower() == 'movie'].copy()
+
+    # --- Step 2: Convert 'duration' (like '90 min') to numeric minutes ---
+    movies_df['duration_minutes'] = (
+        movies_df['duration']
+        .astype(str)
+        .apply(lambda x: int(re.findall(r'\d+', x)[0]) if re.findall(r'\d+', x) else None)
+    )
+
+    # Drop missing or invalid duration rows
+    movies_df = movies_df.dropna(subset=['duration_minutes'])
+
+    # --- Step 3: Ensure uniqueness (country + show_id) ---
+    movies_df = movies_df.drop_duplicates(subset=['country', 'show_id'])
+
+    # --- Step 4: Compute average duration per country ---
+    avg_duration = (
+        movies_df.groupby('country')['duration_minutes']
+        .mean()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+
+    # --- Step 5: Take top N countries ---
+    top_countries = avg_duration.head(top_n)
+
+    # --- Step 6: Netflix-inspired palette ---
+    netflix_palette = ['#E50914', '#b81d24', '#221f1f', '#737373', '#7c0f00']
+
+    # --- Step 7: Plot ---
+    sns.set_theme(style="whitegrid", rc={'axes.facecolor': 'white', 'figure.facecolor': 'white'})
+
+    plt.figure(figsize=(12, 6))
+    sns.barplot(
+        data=top_countries,
+        x='country',
+        y='duration_minutes',
+        palette=netflix_palette
+    )
+
+    # --- Step 8: Customize ---
+    plt.title("Average Movie Duration by Country", fontsize=16, color='#E50914', weight='bold')
+    plt.xlabel("Country", fontsize=12, color='black')
+    plt.ylabel("Average Duration (minutes)", fontsize=12, color='black')
+    plt.xticks(rotation=75, ha='right', color='black')
+    plt.yticks(color='black')
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_avg_seasons_by_country(df, top_n): #Aditya
+    """
+    Plots the average number of TV show seasons per country using a Netflix-inspired palette.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing at least ['show_id', 'country', 'type', 'duration'] columns.
+        'duration' should contain strings like '1 Season' or '2 Seasons'.
+    top_n : int, optional
+        Number of top countries to display in the bar plot.
+    """
+
+    # --- Step 1: Keep unique shows only ---
+    df_unique = df.drop_duplicates(subset=['show_id']).copy()
+
+    # --- Step 2: Filter for TV Shows only ---
+    tv_df = df_unique[df_unique['type'].str.lower() == 'tv show'].copy()
+
+    # --- Step 3: Extract numeric season counts ---
+    tv_df['seasons'] = (
+        tv_df['duration']
+        .astype(str)
+        .apply(lambda x: int(re.findall(r'\d+', x)[0]) if re.findall(r'\d+', x) else None)
+    )
+
+    # Drop rows without valid season info or country
+    tv_df = tv_df.dropna(subset=['seasons', 'country'])
+
+    # --- Step 4: Compute average seasons per country ---
+    avg_seasons = (
+        tv_df.groupby('country')['seasons']
+        .mean()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+
+    # --- Step 5: Select top N countries ---
+    top_countries = avg_seasons.head(top_n)
+
+    # --- Step 6: Netflix-inspired palette ---
+    netflix_palette = ['#E50914', '#b81d24', '#221f1f', '#737373', "#7c0f00"]
+
+    # --- Step 7: Plot setup ---
+    sns.set_theme(style="whitegrid", rc={'axes.facecolor': 'white', 'figure.facecolor': 'white'})
+
+    plt.figure(figsize=(12, 6))
+    sns.barplot(
+        data=top_countries,
+        x='country',
+        y='seasons',
+        palette=netflix_palette
+    )
+
+    # --- Step 8: Styling ---
+    plt.title("Average Number of TV Show Seasons by Country", fontsize=16, color='#E50914', weight='bold')
+    plt.xlabel("Country", fontsize=12, color='black')
+    plt.ylabel("Average Number of Seasons", fontsize=12, color='black')
+    plt.xticks(rotation=90, ha='right', color='black')
+    plt.yticks(color='black')
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_avg_seasons_by_country(df, top_n): #Aditya
+    """
+    Plots the average number of TV show seasons per country using a Netflix-inspired palette.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing at least ['show_id', 'country', 'type', 'duration'] columns.
+        'duration' should contain strings like '1 Season' or '2 Seasons'.
+    top_n : int, optional
+        Number of top countries to display in the bar plot.
+    """
+
+    # --- Step 1: Keep unique shows only ---
+    df_unique = df.drop_duplicates(subset=['show_id']).copy()
+
+    # --- Step 2: Filter for TV Shows only ---
+    tv_df = df_unique[df_unique['type'].str.lower() == 'tv show'].copy()
+
+    # --- Step 3: Extract numeric season counts ---
+    tv_df['seasons'] = (
+        tv_df['duration']
+        .astype(str)
+        .apply(lambda x: int(re.findall(r'\d+', x)[0]) if re.findall(r'\d+', x) else None)
+    )
+
+    # Drop rows without valid season info or country
+    tv_df = tv_df.dropna(subset=['seasons', 'country'])
+
+    # --- Step 4: Compute average seasons per country ---
+    avg_seasons = (
+        tv_df.groupby('country')['seasons']
+        .mean()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+
+    # --- Step 5: Select top N countries ---
+    top_countries = avg_seasons.head(top_n)
+
+    # --- Step 6: Netflix-inspired palette ---
+    netflix_palette = ['#E50914', '#b81d24', '#221f1f', '#737373', "#7c0f00"]
+
+    # --- Step 7: Plot setup ---
+    sns.set_theme(style="whitegrid", rc={'axes.facecolor': 'white', 'figure.facecolor': 'white'})
+
+    plt.figure(figsize=(12, 6))
+    sns.barplot(
+        data=top_countries,
+        x='country',
+        y='seasons',
+        palette=netflix_palette
+    )
+
+    # --- Step 8: Styling ---
+    plt.title("Average Number of TV Show Seasons by Country", fontsize=16, color='#E50914', weight='bold')
+    plt.xlabel("Country", fontsize=12, color='black')
+    plt.ylabel("Average Number of Seasons", fontsize=12, color='black')
+    plt.xticks(rotation=90, ha='right', color='black')
+    plt.yticks(color='black')
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_movie_coproduction_heatmap(df, top_n): # Aditya
+    """
+    Plots a Netflix-themed heatmap showing how many unique movies 
+    are shared (co-produced) between pairs of countries.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing ['show_id', 'type', 'country'] columns.
+        Each (show_id, country) pair represents one country’s involvement in a movie.
+    top_n : int
+        Number of top countries (by unique movie count) to display.
+    """
+
+    # --- Step 1: Filter only Movies ---
+    movies_df = df[df['type'].str.lower() == 'movie'].copy()
+
+    # --- Step 2: Get top countries by number of unique movies ---
+    top_countries = (
+        movies_df.groupby('country')['show_id']
+        .nunique()
+        .sort_values(ascending=False)
+        .head(top_n)
+        .index
+    )
+
+    # --- Step 3: Keep only those top countries ---
+    movies_df = movies_df[movies_df['country'].isin(top_countries)]
+
+    # --- Step 4: Build co-production matrix ---
+    pairs_count = {}
+
+    # For each show_id, get all countries involved
+    for show_id, group in movies_df.groupby('show_id'):
+        countries = sorted(group['country'].unique())
+        # Create all combinations of country pairs for that show_id
+        for c1, c2 in itertools.combinations(countries, 2):
+            pairs_count[(c1, c2)] = pairs_count.get((c1, c2), 0) + 1
+
+    # --- Step 5: Create symmetric matrix (DataFrame) ---
+    matrix = pd.DataFrame(0, index=top_countries, columns=top_countries)
+
+    for (c1, c2), count in pairs_count.items():
+        matrix.loc[c1, c2] += count
+        matrix.loc[c2, c1] += count
+
+    # Diagonal entries = unique movies per country
+    solo_counts = movies_df.groupby('country')['show_id'].nunique()
+    for c in top_countries:
+        matrix.loc[c, c] = solo_counts.get(c, 0)
+
+    # --- Step 6: Plot Heatmap (Netflix style) ---
+    sns.set_theme(style="white")
+    plt.figure(figsize=(20, 16))
+    netflix_red = "#E50914"
+    netflix_palette = sns.color_palette(["#000000", netflix_red, "#B81D24"])
+
+    sns.heatmap(
+        matrix,
+        cmap=netflix_palette,
+        annot=True,
+        fmt=".0f",
+        linewidths=0.5,
+        cbar_kws={'label': 'Number of Shared Unique Movies'}
+    )
+
+    plt.title(
+        "Netflix Co-Production Heatmap: Shared Unique Movies Between Countries",
+        fontsize=16,
+        color=netflix_red,
+        weight='bold'
+    )
+    plt.xlabel("Country", fontsize=12)
+    plt.ylabel("Country", fontsize=12)
+    plt.xticks(rotation=75, ha='right')
+    plt.yticks(rotation=0)
+    plt.tight_layout()
     plt.show()
