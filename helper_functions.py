@@ -75,7 +75,6 @@ def generate_boxplot_interactive(df, cat, val, outlier=True):  # John
 
     fig.show()
 
-
 def Ftest(df,level,val,alpha=0.05): # John
 
     # INPUTS
@@ -435,7 +434,7 @@ def generate_interactive_scatter(df, x, y, color=None, hover=None): # John
 
     fig.show()
 
-def bar_stacked(   # Sourendra
+def bar_stacked(                    #Sourendra
     df,
     *,
     title: str = "Stacked Bar Chart",
@@ -449,7 +448,8 @@ def bar_stacked(   # Sourendra
     save_path: str | None = None,
 ):
     """
-    Draws a stacked bar chart from a given DataFrame.
+    Draws a stacked bar chart from a given DataFrame, styled with Netflix brand colors
+    on a clean white background for better contrast.
 
     Inputs:-
     ----------
@@ -465,7 +465,8 @@ def bar_stacked(   # Sourendra
 
     4) color : list, optional
         List of color codes to use for the bars.
-        If None, matplotlib will assign default colors.
+        If None, the function uses Netflix brand colors on white background:
+        ["#E50914" (Netflix Red), "#000000" (Black), "#555555" (Gray), "#B3B3B3" (Light Gray)]
 
     5) legend_title : str, default = "Type"
         Title displayed on the legend.
@@ -482,6 +483,9 @@ def bar_stacked(   # Sourendra
     9) save_path : str, optional
         If provided, saves the plot to the given path.
 
+    Output:-
+    ----------
+    Returns the matplotlib Axes object of the plot.
     """
     import matplotlib.pyplot as plt
     import pandas as pd
@@ -489,22 +493,418 @@ def bar_stacked(   # Sourendra
     if not isinstance(df, pd.DataFrame):
         raise TypeError("Expected input 'df' to be a pandas DataFrame.")
 
-    # --- Plot the stacked bar chart ---
-    ax = df.plot(kind="bar", stacked=True, figsize=figsize, color=color)
+    # --- Default Netflix brand colors on white background ---
+    if color is None:
+        color = ["#E50914", "#000000", "#555555", "#B3B3B3"]
 
-    ax.set_title(title, fontsize=16)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.legend(title=legend_title)
-    plt.xticks(rotation=rotation)
+    # --- Set white background for clarity ---
+    plt.rcParams['figure.facecolor'] = 'white'
+    plt.rcParams['axes.facecolor'] = 'white'
+    plt.rcParams['savefig.facecolor'] = 'white'
+
+    # --- Plot the stacked bar chart ---
+    ax = df.plot(kind="bar", stacked=True, figsize=figsize, color=color[:len(df.columns)], edgecolor='black')
+
+    ax.set_title(title, fontsize=16, color="#000000", pad=10, fontweight="bold")
+    ax.set_xlabel(xlabel, color="#000000")
+    ax.set_ylabel(ylabel, color="#000000")
+    ax.legend(
+        title=legend_title,
+        title_fontsize=12,
+        fontsize=10,
+        facecolor="white",
+        edgecolor="#000000",
+        labelcolor="#000000"
+    )
+
+    plt.xticks(rotation=rotation, color="#000000", fontsize=10)
+    plt.yticks(color="#000000", fontsize=10)
+    plt.grid(color="#DDDDDD", linestyle="--", linewidth=0.5, alpha=0.7)
     plt.tight_layout()
 
     # --- Save or show ---
     if save_path:
-        plt.savefig(save_path, bbox_inches="tight", dpi=300)
+        plt.savefig(save_path, bbox_inches="tight", dpi=300, facecolor="white")
     if show:
         plt.show()
+
     return ax
+
+def bar_chart_vertical(             #Sourendra
+    s,
+    *,
+    title: str = "Bar Chart",
+    xlabel: str = "",
+    ylabel: str = "Count",
+    color: str = "#E50914",
+    figsize: tuple = (12, 6),
+    annotate: bool = True,
+    rotation: int = 0,
+    show: bool = True,
+    save_path: str | None = None,
+):
+    """
+    Generalized vertical bar chart helper for categorical or time-like count Series.
+
+    Parameters
+    ----------
+    s : pd.Series
+        Index = categories (e.g. months, genres), values = counts.
+    title : str
+        Chart title.
+    xlabel : str
+        Label for x-axis.
+    ylabel : str
+        Label for y-axis.
+    color : str
+        Color for bars.
+    figsize : tuple
+        Figure size.
+    annotate : bool
+        Whether to show count annotations above bars.
+    rotation : int
+        Rotation angle for x-axis tick labels.
+    show : bool
+        Whether to display the plot immediately.
+    save_path : str
+        Optional path to save the figure.
+    """
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import numpy as np
+
+    if not isinstance(s, pd.Series):
+        raise TypeError("Expected a pandas Series (index=labels, values=counts).")
+
+    # --- Sort months in natural order if applicable ---
+    month_order = ["January", "February", "March", "April", "May", "June",
+                   "July", "August", "September", "October", "November", "December"]
+    month_abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+    idx_str = s.index.astype(str)
+
+    if all(x in month_order for x in idx_str):
+        s_plot = s.reindex(month_order).dropna()
+    elif all(x in month_abbr for x in idx_str):
+        s_plot = s.reindex(month_abbr).dropna()
+    else:
+        s_plot = s.sort_index()
+
+    # --- Plot ---
+    fig, ax = plt.subplots(figsize=figsize)
+    bars = ax.bar(s_plot.index.astype(str), s_plot.values, color=color)
+
+    # Annotate each bar
+    if annotate:
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2, height, f"{int(height)}",
+                    ha='center', va='bottom', fontsize=10)
+
+    ax.set_title(title, fontsize=14)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    plt.xticks(rotation=rotation)
+    plt.tight_layout()
+
+    if save_path:
+        plt.savefig(save_path, bbox_inches="tight")
+
+    if show:
+        plt.show()
+
+def heatmap_by_category(            #Sourendra
+    df,
+    row_col="year_added",
+    col_col="month_added",
+    value_col="show_id",
+    figsize=(20, 10),
+    title="Heatmap of Content Added by Year and Month"
+):
+    """
+    Plots a heatmap with a white background and a black-to-red color scale for the cells.
+    This function is self-contained and its styling will not affect other plots.
+    The Netflix red and black theme is now built-in.
+
+    INPUTS:
+        df (pd.DataFrame): DataFrame containing the data.
+        row_col (str): Column for Y-axis (default: 'year_added').
+        col_col (str): Column for X-axis (default: 'month_added').
+        value_col (str): Column whose count is used (default: 'show_id').
+        figsize (tuple): Figure size (default: (20, 10)).
+        title (str): Plot title (default: 'Heatmap of Content Added by Year and Month').
+
+    RETURNS:
+        None (Displays a heatmap)
+    """
+    
+    # --- 1. Self-Contained Imports ---
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    from matplotlib.colors import LinearSegmentedColormap
+
+    # --- 2. Data Preparation ---
+    month_order = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ]
+    if col_col.lower().startswith("month") and df[col_col].dtype == object:
+        df[col_col] = pd.Categorical(df[col_col], categories=month_order, ordered=True)
+
+    pivot_table = (
+        df.groupby([row_col, col_col])[value_col]
+        .count()
+        .unstack(fill_value=0)
+        .sort_index(ascending=True)
+    )
+
+    # --- 3. Style and Color Definition (Hardcoded) ---
+    background_color = 'white'
+    text_color = 'black'
+    netflix_red = '#E50914'
+    
+    # The custom black-to-red colormap is now the only option.
+    # Low values will be black, high values will be bright red.
+    netflix_cmap = LinearSegmentedColormap.from_list(
+        "netflix_custom_theme", ["#000000", netflix_red], N=256
+    )
+
+    # --- 4. Plotting with Isolated Styling ---
+    # Use a 'with' context to ensure style changes are temporary and local.
+    with plt.style.context('default'):
+        plt.rcParams['figure.facecolor'] = background_color
+        plt.rcParams['axes.facecolor'] = background_color
+        
+        plt.figure(figsize=figsize)
+        
+        ax = sns.heatmap(
+            pivot_table,
+            cmap=netflix_cmap,  # Use the hardcoded Netflix colormap
+            annot=False,
+            linewidths=0.5,
+            linecolor='white',
+            cbar=True,
+            cbar_kws={'label': 'Count'}
+        )
+
+        # --- 5. Formatting ---
+        plt.title(title, fontsize=18, color=netflix_red, pad=20, fontweight="bold")
+        plt.xlabel(col_col.replace("_", " ").title(), color=text_color, fontsize=12, labelpad=10)
+        plt.ylabel(row_col.replace("_", " ").title(), color=text_color, fontsize=12, labelpad=10)
+        
+        plt.xticks(rotation=45, color=text_color)
+        plt.yticks(rotation=0, color=text_color)
+
+        cbar = ax.collections[0].colorbar
+        cbar.set_label('Count', color=text_color)
+        cbar.ax.yaxis.set_tick_params(color=text_color)
+        plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color=text_color)
+
+        plt.tight_layout()
+        plt.show()
+
+def generate_multi_line_chart(      #Sourendra
+    data_dict,
+    *,
+    title="Line Chart Comparison",
+    xlabel="X-axis",
+    ylabel="Y-axis",
+    figsize=(12, 6),
+    marker="o",
+    linestyle="-",
+    grid_alpha=0.3,
+):
+    """
+    Plot multiple lines on the same chart for comparison, styled with a clean white theme
+    and red & black lines.
+
+    Parameters
+    ----------
+    data_dict : dict
+        Dictionary where keys are labels (e.g., 'Movies', 'TV Shows')
+        and values are pandas Series or lists with numeric indexes (like years).
+    title : str
+        Title of the plot.
+    xlabel : str
+        Label for the X-axis.
+    ylabel : str
+        Label for the Y-axis.
+    figsize : tuple
+        Figure size of the plot.
+    marker : str
+        Marker style for each line.
+    linestyle : str
+        Line style for all plots.
+    grid_alpha : float
+        Transparency of the grid.
+    """
+    # --- 1. Self-Contained Imports ---
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    from itertools import cycle
+
+    # --- 2. White Theme Color Palette ---
+    background_color = '#FFFFFF'
+    text_color = '#000000'
+    netflix_red = '#E50914'
+    grid_color = '#CCCCCC' # Light grey for the grid
+    
+    # Define a color cycle for the lines to alternate between red and black
+    line_colors = cycle([netflix_red, text_color])
+
+    # --- 3. Plotting with Isolated Styling ---
+    # Use plt.style.context() to apply the theme ONLY within this 'with' block.
+    with plt.style.context('default'):
+        # Create figure and axes
+        fig, ax = plt.subplots(figsize=figsize)
+        
+        # Set background colors
+        fig.set_facecolor(background_color)
+        ax.set_facecolor(background_color)
+
+        # Loop through each dataset in the dictionary
+        for label, series in data_dict.items():
+            # Convert to Series if list is passed
+            if not isinstance(series, pd.Series):
+                series = pd.Series(series)
+            
+            ax.plot(
+                series.index,
+                series.values,
+                marker=marker,
+                linestyle=linestyle,
+                label=label,
+                color=next(line_colors) # Cycle through red and black
+            )
+
+        # --- 4. Formatting and Final Touches ---
+        # Set title and labels with theme colors
+        ax.set_title(title, fontsize=16, color=netflix_red, fontweight='bold', pad=20)
+        ax.set_xlabel(xlabel, fontsize=12, color=text_color)
+        ax.set_ylabel(ylabel, fontsize=12, color=text_color)
+
+        # Customize grid
+        ax.grid(True, alpha=grid_alpha, color=grid_color, linestyle='--')
+        
+        # Customize ticks and spines (the plot border)
+        ax.tick_params(axis='x', colors=text_color)
+        ax.tick_params(axis='y', colors=text_color)
+        for spine in ax.spines.values():
+            spine.set_edgecolor(text_color)
+            
+        # Customize legend
+        legend = ax.legend()
+        legend.get_frame().set_facecolor(background_color)
+        for text in legend.get_texts():
+            text.set_color(text_color)
+
+        plt.tight_layout()
+        plt.show()
+
+def generate_heatmap_flexible(      #Sourendra
+    df,
+    index_col,
+    column_col,
+    value_col=None,
+    aggfunc=None,
+    cmap="Reds",
+    figsize=(12, 5),
+    annot=True,
+    fmt=".0f",
+    orientation="vertical",
+    title=None,
+    xlabel=None,
+    ylabel=None,
+    cbar_label=None,
+):
+    """
+    A flexible and generalized heatmap generator for exploring relationships between
+    any two categorical or temporal variables. Supports aggregation, custom colormaps,
+    and annotation formatting.
+
+    INPUTS:
+        df (pd.DataFrame): Input dataset.
+        index_col (str): Column for Y-axis (rows).
+        column_col (str): Column for X-axis (columns).
+        value_col (str, optional): Column to aggregate. If None, counts entries.
+        aggfunc (str or callable, optional): Aggregation function ('count', 'mean', 'sum', etc.).
+                                             If None, auto-detects based on value_col type.
+        cmap (str): Matplotlib colormap (default 'Reds').
+        figsize (tuple): Figure size (default (12, 5)).
+        annot (bool): Display numeric annotations (default True).
+        fmt (str): String format for annotations (default '.0f').
+        orientation (str): Orientation of colorbar ('vertical' or 'horizontal').
+        title (str): Custom plot title (auto-generated if None).
+        xlabel (str): X-axis label (auto-generated if None).
+        ylabel (str): Y-axis label (auto-generated if None).
+        cbar_label (str): Colorbar label (auto-generated if None).
+
+    RETURNS:
+        None (Displays a heatmap)
+    """
+    import pandas as pd
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
+    # --- Auto-detect aggregation function ---
+    if aggfunc is None:
+        if value_col is None:
+            aggfunc = "count"
+        elif pd.api.types.is_numeric_dtype(df[value_col]):
+            aggfunc = "mean"
+        else:
+            aggfunc = "count"
+
+    # --- Smart labeling ---
+    if title is None:
+        title = f"Heatmap of {value_col or 'Counts'} by {index_col} and {column_col}"
+    if xlabel is None:
+        xlabel = column_col.replace("_", " ").title()
+    if ylabel is None:
+        ylabel = index_col.replace("_", " ").title()
+    if cbar_label is None:
+        cbar_label = f"{aggfunc.title()} of {value_col or 'Entries'}"
+
+    # --- Pivot table creation ---
+    if value_col is None:
+        pivot_table = df.groupby([index_col, column_col]).size().unstack(fill_value=0)
+    else:
+        pivot_table = (
+            df.groupby([index_col, column_col])[value_col]
+            .agg(aggfunc)
+            .unstack(fill_value=0)
+        )
+
+    # --- Month or day ordering (optional heuristic) ---
+    import calendar
+    if column_col.lower().startswith("month"):
+        month_order = list(calendar.month_abbr)[1:]  # ['Jan', ..., 'Dec']
+        # Handle if numeric months
+        if pivot_table.columns.dtype.kind in "iufc":
+            month_order = range(1, 13)
+        pivot_table = pivot_table[[col for col in month_order if col in pivot_table.columns]]
+
+    # --- Plotting ---
+    plt.figure(figsize=figsize)
+    sns.heatmap(
+        pivot_table,
+        cmap=cmap,
+        annot=annot,
+        fmt=fmt,
+        linewidths=0.5,
+        linecolor="white",
+        cbar_kws={"orientation": orientation, "label": cbar_label},
+    )
+
+    plt.title(title, fontsize=16, pad=12, weight="bold")
+    plt.xlabel(xlabel, fontsize=12)
+    plt.ylabel(ylabel, fontsize=12)
+    plt.xticks(rotation=45)
+    plt.yticks(rotation=0)
+    plt.tight_layout()
+    plt.show()
 
 def generate_line_chart( #Daksh
     s,
