@@ -1,7 +1,10 @@
 # ===============================
 # Python and Jupyter Git Ignore
 # ===============================
-
+# Ignore local-only analysis and data files
+content_creator_analysis.ipynb
+final_cleaned_main.csv
+content_creator_analysis.py
 # Ignore Jupyter Notebook files
 *.ipynb
 

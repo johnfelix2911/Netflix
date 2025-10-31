@@ -1112,30 +1112,76 @@ def plot_creator_country_distribution(df, creator_col='director'):  # Taniya
     plt.tight_layout()
     plt.show()
 
-def director_rating_significance(df, val_col='vote_average'):#Taniya
-    # """
-    # INPUTS:
-    #     df (pandas.DataFrame)  -> Dataset containing 'director' and rating column.
-    #     val_col (str)          -> Continuous value to compare (default = 'vote_average').
+def director_rating_significance(df, val_col='vote_average'):  # Taniya
+    import pandas as pd
+    import numpy as np
+    from itertools import combinations
+    from scipy.stats import f, t
 
-    # RETURNS:
-    #     dict or None -> Dictionary of significant pairwise differences (if F-test significant).
+    # Drop missing values for safety
+    df = df.dropna(subset=['director', val_col])
 
-    # PURPOSE:
-    #     Uses existing Ftest() and LSD_test() functions to check if directors differ
-    #     significantly in average rating, then performs pairwise LSD comparisons.
-    # """
-    f_stat, f_crit, sse = Ftest(df, 'director', val_col)
+    # Group by director and compute mean and count
+    groups = df.groupby('director')[val_col].apply(list)
+    k = len(groups)  # Number of directors
+    n_total = len(df)  # Total observations
+    overall_mean = df[val_col].mean()
+
+    # ---- F-test (One-way ANOVA) ----
+    # Between-group sum of squares (SSB)
+    ssb = sum([len(vals) * (np.mean(vals) - overall_mean) ** 2 for vals in groups])
+
+    # Within-group sum of squares (SSW)
+    ssw = sum([sum((np.array(vals) - np.mean(vals)) ** 2) for vals in groups])
+
+    dfb = k - 1
+    dfw = n_total - k
+    msb = ssb / dfb
+    msw = ssw / dfw
+    f_stat = msb / msw
+    f_crit = f.ppf(0.95, dfb, dfw)  # α = 0.05
+
     print(f"F-statistic = {f_stat:.3f}, F-critical = {f_crit:.3f}")
-    if f_stat > f_crit:
-        print("Reject H₀ → Significant difference between directors.")
-        result = LSD_test(df, 'director', val_col, sse)
-        return result
+    if f_stat <= f_crit:
+        print("Fail to reject H₀ → No significant difference between directors.")
+        return None
+
+    print("Reject H₀ → Significant difference detected. Proceeding with LSD test...")
+
+    # ---- LSD (Least Significant Difference) ----
+    result = {}
+    means = groups.apply(np.mean)
+    sizes = groups.apply(len)
+    se = np.sqrt(msw * (1/sizes.values[:, None] + 1/sizes.values))
+
+    # t-critical value (two-tailed, α=0.05)
+    t_crit = t.ppf(1 - 0.05/2, dfw)
+    lsd_results = []
+
+    for (d1, d2) in combinations(groups.index, 2):
+        diff = abs(means[d1] - means[d2])
+        se_pair = np.sqrt(msw * (1/sizes[d1] + 1/sizes[d2]))
+        lsd = t_crit * se_pair
+        significant = diff > lsd
+        result[(d1, d2)] = {
+            'Mean_Diff': diff,
+            'LSD': lsd,
+            'Significant': significant
+        }
+        lsd_results.append((d1, d2, diff, lsd, significant))
+
+    # Print summary of significant differences
+    sig_pairs = [pair for pair, vals in result.items() if vals['Significant']]
+    if sig_pairs:
+        print("\nSignificant director pairs (mean difference > LSD):")
+        for pair in sig_pairs:
+            print(f"  {pair[0]} vs {pair[1]} → Δ={result[pair]['Mean_Diff']:.3f}")
     else:
-        print("Fail to reject H₀ → No significant difference detected.")
+        print("\nNo significant pairwise differences found in LSD test.")
 
+    return result
 
-def plot_international_vs_domestic(df, creator_col='director', home_country='United States'):  # Taniya
+def plot_international_vs_domestic(df, creator_col='director', home_country='India'):  # Taniya
     """
     INPUTS:
         df (pandas.DataFrame)  -> Dataset with 'country' and creator column.
@@ -1249,7 +1295,8 @@ def plot_cast_frequency_distribution(df):#Taniya
     plt.ylabel("Actor")
     plt.tight_layout()
     plt.show()
-def plot_creator_timeline(df, creator_col='director', top_n=5):#Taniya
+
+def plot_creator_timeline(df, creator_col='director', top_n=5):  # Taniya
     
     # INPUTS:
     #     df (pandas.DataFrame) -> Dataset containing creator names and release years
@@ -1297,9 +1344,23 @@ def plot_creator_timeline(df, creator_col='director', top_n=5):#Taniya
     plt.title(f"Yearly Count of Works by Top {top_n} {creator_col.title()}s", fontsize=14)
     plt.xlabel("Release Year")
     plt.ylabel("Number of Titles")
-    plt.legend(title=creator_col.title(), bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    # ✅ Legend INSIDE the plot (top-left corner)
+    plt.legend(
+        title=creator_col.title(),
+        loc='upper left',
+        bbox_to_anchor=(0.02, 0.98),
+        frameon=True,
+        facecolor='black',
+        framealpha=0.9,
+        fontsize=9,
+        title_fontsize=10
+    )
+
     plt.tight_layout()
     plt.show()
+
+
 def compute_entropy(df, entity_col, category_col):#Taniya
     # """
     # Computes Shannon Entropy for any categorical pair (e.g., Director–Genre, Actor–Genre, Country–Category).
@@ -1406,3 +1467,48 @@ def plot_entropy(entropy_df, entity_col, top_n=10):  # Taniya
     plt.tight_layout()
     plt.show()
 
+def generate_styled_boxplot(df, cat, val, outlier=True): # Taniya
+   
+    # INPUTS:
+    # df (pandas dataframe) -> the dataframe that contains the data
+    # cat (string) -> Name of column. Each category(discrete) gets a boxplot
+    # val (string) -> Name of column. Value(continuous) for which the boxplot is created
+    # outlier (boolean) -> True or False. whether or not the outliers should be plotted (True by default)
+
+    # RETURNS
+    # returns nothing as such but it prints the boxplot
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import pandas as pd
+    import numpy as np
+
+    # computes median value per genre
+    genre_medians = df.groupby(cat)[val].median().sort_values(ascending=False)
+
+    plt.figure(figsize=(20, 10))
+
+    # Netflix red color
+    netflix_red = '#E50914'
+
+    sns.boxplot(
+        data=df,
+        x=cat,
+        y=val,
+        order=genre_medians.index,   # sort by median
+        showfliers=outlier,
+        boxprops=dict(color=netflix_red),
+        whiskerprops=dict(color=netflix_red),
+        capprops=dict(color=netflix_red),
+        medianprops=dict(color=netflix_red),
+        flierprops=dict(markerfacecolor=netflix_red, markeredgecolor=netflix_red),
+    )
+
+    # Styling text in white
+    plt.xlabel("", color="white")
+    plt.xticks([], color="white")
+    plt.ylabel(val, fontsize=14, color="white")
+    plt.title("Boxplot of "+val+" by "+cat+" (Sorted by Median)", fontsize=16, color="white")
+    plt.yticks(fontsize=12, color="white")
+
+    plt.show()
