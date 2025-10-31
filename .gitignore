@@ -37,6 +37,7 @@ dist/
 *.tmp
 *.swp
 
+
 # Ignore system files
 .DS_Store
 Thumbs.db
@@ -50,5 +51,8 @@ htmlcov/
 .coverage
 .pytest_cache/
 
+
 # folders to ve ignored
 Data/
+"content_creator_analysis.py"
+"final_cleaned_main.csv"
