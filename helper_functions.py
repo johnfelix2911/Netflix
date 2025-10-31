@@ -369,70 +369,6 @@ def generate_treemap(df, cat, val): # John
 
     fig.show()
 
-
-# def generate_interactive_scatter(df, x, y, color=None, hover=None):
-#     """
-#     Creates an interactive Netflix-themed scatter plot using Plotly.
-
-#     Parameters
-#     ----------
-#     df : pandas.DataFrame
-#         The dataframe containing the data.
-#     x : str
-#         The name of the column for the x-axis (e.g. 'budget').
-#     y : str
-#         The name of the column for the y-axis (e.g. 'revenue').
-#     color : str, optional
-#         The name of the categorical column to color the points by (e.g. 'genres').
-#     hover : str or list, optional
-#         Column(s) to display when hovering (e.g. 'title' or ['title', 'rating']).
-
-#     Returns
-#     -------
-#     Displays an interactive scatter plot.
-#     """
-#     import pandas as pd
-#     import plotly.express as px
-
-#     # Drop rows with missing required values
-#     cols = [x, y]
-#     if color:
-#         cols.append(color)
-#     if hover:
-#         if isinstance(hover, list):
-#             cols.extend(hover)
-#         else:
-#             cols.append(hover)
-#     df_clean = df.dropna(subset=cols)
-
-#     # Create interactive scatter plot
-#     fig = px.scatter(
-#         df_clean,
-#         x=x,
-#         y=y,
-#         color=color,
-#         hover_data=hover,
-#         title=f"{y} vs {x}" + (f" colored by {color}" if color else ""),
-#         color_discrete_sequence=['#E50914', '#B81D24', '#831010', '#221f1f'],  # Netflix reds
-#     )
-
-#     # Style for Netflix dark theme
-#     fig.update_layout(
-#         template='plotly_dark',
-#         paper_bgcolor='#141414',
-#         plot_bgcolor='#141414',
-#         font=dict(color='white'),
-#         title_font=dict(size=22),
-#         xaxis_title=x.title(),
-#         yaxis_title=y.title(),
-#         legend_title=color.title() if color else '',
-#     )
-
-#     # Smooth marker style
-#     fig.update_traces(marker=dict(size=10, opacity=0.8, line=dict(width=1, color='white')))
-
-#     fig.show()
-
 def generate_interactive_scatter(df, x, y, color=None, hover=None): # John
     """
     Creates an interactive scatter plot using Plotly (dark theme + distinct colors).
@@ -499,75 +435,77 @@ def generate_interactive_scatter(df, x, y, color=None, hover=None): # John
 
     fig.show()
 
-# def generate_bar_chart_race(df, category, value, time_col, title=None, n_bars=10, filename='bar_chart_race.mp4'):
-#     """
-#     Creates a bar chart race animation showing how a value changes over time across categories.
+def bar_stacked(   # Sourendra
+    df,
+    *,
+    title: str = "Stacked Bar Chart",
+    xlabel: str = "",
+    ylabel: str = "Count",
+    color: list | None = None,
+    legend_title: str = "Type",
+    figsize: tuple = (20, 10),
+    rotation: int = 45,
+    show: bool = True,
+    save_path: str | None = None,
+):
+    """
+    Draws a stacked bar chart from a given DataFrame.
 
-#     Parameters
-#     ----------
-#     df : pandas.DataFrame
-#         DataFrame containing the data.
-#     category : str
-#         Name of the categorical column (e.g. 'genres').
-#     value : str
-#         Name of the numeric column (e.g. 'popularity').
-#     time_col : str
-#         Name of the time column (e.g. 'release_year').
-#     title : str, optional
-#         Title for the chart (default: auto-generated).
-#     n_bars : int, optional
-#         Number of top bars to display (default: 10).
-#     filename : str, optional
-#         Output file name (e.g. 'bar_chart_race.mp4' or '.gif').
+    Inputs:-
+    ----------
+    1) df : pd.DataFrame
+        DataFrame where each column represents a category to be stacked.
+        The index will be used as x-axis labels.
 
-#     Returns
-#     -------
-#     Displays and saves a bar chart race animation.
-#     """
+    2) title : str, default = "Stacked Bar Chart"
+        Title of the bar chart.
 
-#     import pandas as pd
-#     import bar_chart_race as bcr
+    3) xlabel, ylabel : str
+        Labels for the x-axis and y-axis.
 
-#     # Clean data: remove missing values and aggregate by year and category
-#     df_clean = (
-#         df.dropna(subset=[category, value, time_col])
-#         .groupby([time_col, category])[value]
-#         .mean()
-#         .reset_index()
-#     )
+    4) color : list, optional
+        List of color codes to use for the bars.
+        If None, matplotlib will assign default colors.
 
-#     # Pivot the table to get years as index and categories as columns
-#     pivot_df = df_clean.pivot(index=time_col, columns=category, values=value).fillna(0)
+    5) legend_title : str, default = "Type"
+        Title displayed on the legend.
 
-#     # Sort columns alphabetically for consistency
-#     pivot_df = pivot_df.sort_index(axis=1)
+    6) figsize : tuple, default = (20, 10)
+        Figure size for the chart.
 
-#     # Create a nice default title if not provided
-#     if not title:
-#         title = f"Change in {value.title()} over Time by {category.title()}"
+    7) rotation : int, default = 45
+        Rotation angle for x-axis tick labels.
 
-#     # Create the bar chart race
-#     bcr.bar_chart_race(
-#         df=pivot_df,
-#         n_bars=n_bars,
-#         sort='desc',
-#         title=title,
-#         filename=filename,
-#         filter_column_colors=True,
-#         steps_per_period=10,
-#         period_length=800,
-#         interpolate_period=False,
-#         cmap='Set2',  # colorful yet readable palette
-#         bar_size=.95,
-#         figsize=(6, 4),
-#         period_label={'x': .95, 'y': .15, 'ha': 'right', 'va': 'center'},
-#         period_summary_func=lambda v, r: {'x': .99, 'y': .05,
-#                                           's': f'Total = {v.sum():,.0f}',
-#                                           'ha': 'right', 'size': 8},
-#         shared_fontdict={'family': 'Arial', 'weight': 'bold', 'color': 'gray'}
-#     )
+    8) show : bool, default = True
+        Whether to display the chart immediately.
 
-#     print(f"✅ Bar chart race saved as: {filename}")
+    9) save_path : str, optional
+        If provided, saves the plot to the given path.
+
+    """
+    import matplotlib.pyplot as plt
+    import pandas as pd
+
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("Expected input 'df' to be a pandas DataFrame.")
+
+    # --- Plot the stacked bar chart ---
+    ax = df.plot(kind="bar", stacked=True, figsize=figsize, color=color)
+
+    ax.set_title(title, fontsize=16)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.legend(title=legend_title)
+    plt.xticks(rotation=rotation)
+    plt.tight_layout()
+
+    # --- Save or show ---
+    if save_path:
+        plt.savefig(save_path, bbox_inches="tight", dpi=300)
+    if show:
+        plt.show()
+    return ax
+
 def generate_line_chart( #Daksh
     s,
     *,
@@ -1406,3 +1344,4 @@ def plot_entropy(entropy_df, entity_col, top_n=10):  # Taniya
     plt.tight_layout()
     plt.show()
 
+    plt.show()
