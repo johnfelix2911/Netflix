@@ -1504,7 +1504,6 @@ def generate_styled_boxplot(df, cat, val, outlier=True): # Taniya
         flierprops=dict(markerfacecolor=netflix_red, markeredgecolor=netflix_red),
     )
 
-    # Styling text in white
     plt.xlabel("", color="white")
     plt.xticks([], color="white")
     plt.ylabel(val, fontsize=14, color="white")
