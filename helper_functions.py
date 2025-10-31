@@ -584,7 +584,8 @@ def chi_square_test(df, col1, col2):#Taniya
     chi2, p, dof, expected = chi2_contingency(contingency)
 
     return chi2, p, dof, contingency
-def plot_chi_square_heatmap(contingency, var1_name="Variable 1", var2_name="Variable 2", top_n=10):#Taniya
+
+def plot_chi_square_heatmap(contingency, var1_name="Variable 1", var2_name="Variable 2", top_n=10):  # Taniya
     """
     Plots a heatmap for the top N categories from a Chi-Square contingency table.
 
@@ -599,35 +600,60 @@ def plot_chi_square_heatmap(contingency, var1_name="Variable 1", var2_name="Vari
     """
     import seaborn as sns
     import matplotlib.pyplot as plt
+    import matplotlib as mpl
 
     # Take top N categories by row totals for clarity
     top_rows = contingency.sum(axis=1).sort_values(ascending=False).head(top_n).index
     subset = contingency.loc[top_rows]
 
+    # Create Netflix-style red gradient colormap
+    netflix_cmap = mpl.colors.LinearSegmentedColormap.from_list(
+        "netflix_red",
+        ["#221F1F", "#8B0000", "#E50914"]
+    )
+
     plt.figure(figsize=(10, 6))
-    sns.heatmap(subset, cmap='YlGnBu', annot=True, fmt='d')
-    plt.title(f"{var1_name} vs {var2_name} Distribution (Top {top_n})", fontsize=14)
-    plt.xlabel(var2_name)
-    plt.ylabel(var1_name)
+    sns.heatmap(
+        subset,
+        cmap=netflix_cmap,
+        annot=True,
+        fmt='d',
+        linewidths=0.5,
+        cbar_kws={"label": "Frequency"},
+        annot_kws={"color": "white", "fontsize": 10}
+    )
+
+    # Netflix-inspired styling
+    plt.title(f"{var1_name} vs {var2_name} Distribution (Top {top_n})",
+              fontsize=15, color="#E50914", fontweight="bold", pad=15)
+    plt.xlabel(var2_name, fontsize=12, color="white")
+    plt.ylabel(var1_name, fontsize=12, color="white")
+
+    plt.gca().set_facecolor("#141414")
+    plt.gcf().patch.set_facecolor("#141414")
+    plt.xticks(color="white", rotation=45, ha="right")
+    plt.yticks(color="white")
+
     plt.tight_layout()
     plt.show()
+
 def anova_test(df, group_col, value_col):#Taniya
-    """
-    Performs a one-way ANOVA test to determine whether the mean of a continuous 
-    variable differs significantly across groups.
+    # """
+    # Performs a one-way ANOVA test to determine whether the mean of a continuous 
+    # variable differs significantly across groups.
 
-    INPUTS:
-        df (pandas.DataFrame) -> Dataset containing categorical and continuous columns
-        group_col (str) -> Column name for the categorical variable (e.g., 'director')
-        value_col (str) -> Column name for the continuous variable (e.g., 'duration')
+    # INPUTS:
+    #     df (pandas.DataFrame) -> Dataset containing categorical and continuous columns
+    #     group_col (str) -> Column name for the categorical variable (e.g., 'director')
+    #     value_col (str) -> Column name for the continuous variable (e.g., 'duration')
 
-    RETURNS:
-        F-statistic (float), p-value (float)
+    # RETURNS:
+    #     F-statistic (float), p-value (float)
 
-    PURPOSE:
-        Tests whether the average of a numeric column (e.g., duration) 
-        differs significantly across categories (e.g., directors).
-    """
+    # PURPOSE:
+    #     Tests whether the average of a numeric column (e.g., duration) 
+    #     differs significantly across categories (e.g., directors).
+    # """
     import pandas as pd
     from scipy.stats import f_oneway
 
@@ -737,29 +763,54 @@ def get_top_creators(df, column, n=20):#Taniya
     subset = df[df[column].str.lower() != 'unknown']
     top_creators = subset[column].value_counts().head(n)
     return top_creators
-def plot_top_creators(series, title, color='steelblue'):#Taniya
-    # """
-    # INPUTS:
-    #     series (pandas.Series) -> Index = creator names; values = counts.
-    #     title (str)            -> Chart title.
-    #     color (str, optional)  -> Bar color (default = 'steelblue').
 
-    # RETURNS:
-    #     None (displays the bar plot).
+def plot_top_creators(series, title):  # Taniya
+    """
+    Visualizes top creators by count using a horizontal bar chart
+    with a Netflix-themed red gradient.
 
-    # PURPOSE:
-    #     Visualizes top creators by count using a horizontal bar chart.
-    # """
-    import seaborn as sns
+    INPUTS:
+        series (pandas.Series) -> Index = creator names; values = counts.
+        title (str)            -> Chart title.
+
+    RETURNS:
+        None (displays the bar plot)
+    """
     import matplotlib.pyplot as plt
+    import numpy as np
+    import matplotlib as mpl
 
+    # Netflix red gradient colormap (dark → bright red)
+    cmap = mpl.colors.LinearSegmentedColormap.from_list(
+        "netflix_red", ["#8B0000", "#E50914"]
+    )
+
+    # Normalize bar values to the colormap range
+    norm = mpl.colors.Normalize(vmin=min(series.values), vmax=max(series.values))
+    colors = cmap(norm(series.values))
+
+    # Plot bars
     plt.figure(figsize=(10, 6))
-    sns.barplot(x=series.values, y=series.index, color=color)
-    plt.title(title, fontsize=15)
-    plt.xlabel("Number of Titles")
-    plt.ylabel("")
+    bars = plt.barh(series.index, series.values, color=colors)
+
+    # Title & labels
+    plt.title(title, fontsize=15, color="#E50914", fontweight="bold")
+    plt.xlabel("Number of Titles", color="white", fontsize=12)
+    plt.ylabel("", color="white")
+    plt.gca().invert_yaxis()  # Highest value at top
+    plt.grid(axis='x', linestyle='--', alpha=0.3, color='gray')
+
+    # Netflix dark background
+    plt.gca().set_facecolor("#141414")
+    plt.gcf().patch.set_facecolor("#141414")
+
+    # Make axis tick labels white
+    plt.xticks(color="white", fontsize=10)
+    plt.yticks(color="white", fontsize=10)
+
     plt.tight_layout()
     plt.show()
+
 def build_collaboration_network(df):#Taniya
     # """
     # INPUTS:
@@ -779,120 +830,94 @@ def build_collaboration_network(df):#Taniya
     G = nx.from_pandas_edgelist(valid_df, source='director', target='cast')
     return G
 
-def plot_network(G, max_nodes=150):#Taniya
-    """
-    INPUTS:
-        G (networkx.Graph) -> Collaboration network from build_collaboration_network().
-        max_nodes (int)    -> Maximum nodes to show (default = 150).
 
-    RETURNS:
-        None (displays enhanced bipartite collaboration visualization).
+def plot_network(G, max_nodes=150):  # Taniya
+    # """
+    # INPUTS:
+    #     G (networkx.Graph) -> Collaboration network from build_collaboration_network().
+    #     max_nodes (int)    -> Maximum nodes to show (default = 150).
 
-    PURPOSE:
-        Improves the director–actor network visualization by:
-        - Coloring directors and actors differently
-        - Scaling node sizes by degree (collaboration frequency)
-        - Using a cleaner spring layout
-    """
+    # RETURNS:
+    #     None (displays Netflix-themed collaboration visualization with visible edges).
+
+    # PURPOSE:
+    #     Visualizes the director–actor network with Netflix-inspired aesthetics:
+    #     - Bright red edges for visibility
+    #     - Red directors, grey-white actors
+    #     - Black cinematic background
+    #     - Node sizes scaled by degree
+    #     - Top collaborators labeled in bright red
+    # """
     import networkx as nx
     import matplotlib.pyplot as plt
+    import numpy as np
 
     # Limit graph size for readability
     if len(G.nodes) > max_nodes:
         G = G.subgraph(list(G.nodes)[:max_nodes])
 
     plt.figure(figsize=(14, 10))
+    plt.style.use("dark_background")
 
     # Identify directors and actors
     directors = [n for n in G.nodes if ' ' in n and len(n.split()) <= 3]
     actors = list(set(G.nodes) - set(directors))
 
+    # Netflix color palette
+    director_color = "#E50914"  # Netflix red
+    actor_color = "#B3B3B3"     # Muted white-grey
+    edge_color = "#E50914"      # Bright red edges
+
     # Colors and node sizes
-    node_colors = ['skyblue' if n in directors else 'salmon' for n in G.nodes]
-    node_sizes = [100 + 3 * nx.degree(G, n) for n in G.nodes]
+    degrees = dict(G.degree)
+    node_colors = [director_color if n in directors else actor_color for n in G.nodes]
+    node_sizes = [120 + 4 * degrees[n] for n in G.nodes]
 
     # Layout
     pos = nx.spring_layout(G, k=0.3, iterations=40, seed=42)
 
-    # Draw nodes and edges
-    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=node_sizes, alpha=0.85)
-    nx.draw_networkx_edges(G, pos, alpha=0.4)
+    # Draw edges — brighter and more visible now
+    nx.draw_networkx_edges(G, pos, edge_color=edge_color, alpha=0.6, width=1.3)
+
+    # Draw nodes
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=node_sizes, alpha=0.9, linewidths=0.5)
 
     # Label top 10 most connected nodes
     top_nodes = sorted(G.degree, key=lambda x: x[1], reverse=True)[:10]
     label_nodes = [n for n, _ in top_nodes if n in pos]
     labels = {n: n for n in label_nodes}
-    nx.draw_networkx_labels(G, pos, labels=labels, font_size=8, font_color='black')
 
-    plt.title("Director–Actor Collaboration Network (Enhanced View)", fontsize=14)
+    nx.draw_networkx_labels(G, pos, labels=labels, font_size=8, font_color="#FF4C4C", font_weight="bold")
+
+    # Style the plot
+    plt.title("🎬 Director–Actor Collaboration Network",
+              fontsize=15, color="#E50914", fontweight="bold", pad=15)
+    plt.gca().set_facecolor("#000000")  # pure black
+    plt.gcf().patch.set_facecolor("#000000")
     plt.axis("off")
     plt.tight_layout()
     plt.show()
 
+def plot_heatmap(matrix, row_label="Row", col_label="Column", top_rows=15, title=None):  # Taniya
+    """
+    Plots a Netflix-themed heatmap for any 2D pivot table (entity–category relationships).
 
-# def plot_genre_heatmap(matrix, top_directors=15):#Taniya
-#     """
-#     INPUTS:
-#         matrix (pd.DataFrame) -> Director–Genre pivot table from director_genre_matrix().
-#         top_directors (int)   -> Number of top directors to display (default = 15).
+    INPUTS:
+        matrix (pd.DataFrame) -> Pivot table or cross-tab (rows = entities, columns = categories)
+        row_label (str) -> Label for rows (e.g., 'Director', 'Actor', 'Country')
+        col_label (str) -> Label for columns (e.g., 'Genre', 'Category', 'Rating')
+        top_rows (int) -> Number of top rows (entities) to display (default = 15)
+        title (str or None) -> Custom title; if None, auto-generates one
 
-#     RETURNS:
-#         None (displays improved heatmap).
-
-#     PURPOSE:
-#         Visualizes directors and the genres they specialize in by showing
-#         the count of titles per genre for each top director.
-#     """
-#     import seaborn as sns
-#     import matplotlib.pyplot as plt
-
-#     # Focus on top directors by total works
-#     top = matrix.sum(axis=1).sort_values(ascending=False).head(top_directors).index
-#     subset = matrix.loc[top]
-
-#     # Sort genres by overall popularity
-#     subset = subset[subset.sum().sort_values(ascending=False).index]
-
-#     plt.figure(figsize=(14, 7))
-#     sns.heatmap(
-#         subset,
-#         cmap="YlOrRd",
-#         linewidths=0.3,
-#         linecolor='white',
-#         cbar_kws={'label': 'Number of Titles'}
-#     )
-#     plt.title("Director–Genre Specialization Map (Top Directors)", fontsize=15)
-#     plt.xlabel("Genre")
-#     plt.ylabel("Director")
-#     plt.xticks(rotation=45, ha="right")
-#     plt.tight_layout()
-#     plt.show()
-def plot_heatmap(matrix, row_label="Row", col_label="Column", top_rows=15, cmap="YlOrRd", title=None):#Taniya
-    # """
-    # Plots a generalized heatmap for any 2D pivot table (entity–category relationships).
-
-    # INPUTS:
-    #     matrix (pd.DataFrame) -> Pivot table or cross-tab (rows = entities, columns = categories)
-    #     row_label (str) -> Label for rows (e.g., 'Director', 'Actor', 'Country')
-    #     col_label (str) -> Label for columns (e.g., 'Genre', 'Category', 'Rating')
-    #     top_rows (int) -> Number of top rows (entities) to display (default = 15)
-    #     cmap (str) -> Color map for heatmap (default = 'YlOrRd')
-    #     title (str or None) -> Custom title; if None, auto-generates one
-
-    # RETURNS:
-    #     None (displays the heatmap)
-
-    # PURPOSE:
-    #     Visualizes relationships between any two categorical dimensions in a dataset.
-    #     Example uses:
-    #     - Director vs Genre specialization
-    #     - Actor vs Genre diversity
-    #     - Country vs Category focus
-    # """
+    RETURNS:
+        None (displays the heatmap)
+    """
     import seaborn as sns
     import matplotlib.pyplot as plt
+    import matplotlib as mpl
     import pandas as pd
-    # Validate matrix
+
+    # Validate input
     if not isinstance(matrix, pd.DataFrame):
         raise ValueError("Input must be a pandas DataFrame pivot table.")
 
@@ -900,26 +925,48 @@ def plot_heatmap(matrix, row_label="Row", col_label="Column", top_rows=15, cmap=
     top_entities = matrix.sum(axis=1).sort_values(ascending=False).head(top_rows).index
     subset = matrix.loc[top_entities]
 
-    # Sort columns (categories) by overall frequency
+    # Sort columns by overall frequency
     subset = subset[subset.sum().sort_values(ascending=False).index]
 
     # Generate title if not provided
     if title is None:
         title = f"{row_label}–{col_label} Relationship Heatmap (Top {top_rows})"
 
+    # Netflix-style color map
+    netflix_cmap = mpl.colors.LinearSegmentedColormap.from_list(
+        "netflix_red",
+        ["#221F1F", "#8B0000", "#E50914"]
+    )
+
     # Plot
     plt.figure(figsize=(14, 7))
     sns.heatmap(
         subset,
-        cmap=cmap,
-        linewidths=0.3,
-        linecolor='white',
+        cmap=netflix_cmap,
+        linewidths=0.4,
+        linecolor="#2a2a2a",
         cbar_kws={'label': 'Count'},
+        annot=False
     )
-    plt.title(title, fontsize=15)
-    plt.xlabel(col_label)
-    plt.ylabel(row_label)
-    plt.xticks(rotation=45, ha="right")
+
+    # Dark Netflix background
+    plt.gca().set_facecolor("#141414")
+    plt.gcf().patch.set_facecolor("#141414")
+
+    # Titles and labels
+    plt.title(title, fontsize=16, color="#E50914", fontweight="bold", pad=15)
+    plt.xlabel(col_label, fontsize=12, color="white")
+    plt.ylabel(row_label, fontsize=12, color="white")
+
+    # Axis styling
+    plt.xticks(rotation=45, ha="right", color="white", fontsize=10)
+    plt.yticks(color="white", fontsize=10)
+
+    # Colorbar styling
+    cbar = plt.gca().collections[0].colorbar
+    cbar.ax.yaxis.label.set_color("white")
+    cbar.ax.tick_params(colors="white")
+
     plt.tight_layout()
     plt.show()
 
@@ -945,34 +992,61 @@ def director_genre_matrix(df, min_titles=3):#Taniya
     pivot = pivot[pivot.sum(axis=1) >= min_titles]
     return pivot
 
+def plot_creator_country_distribution(df, creator_col='director'):  # Taniya
+    """
+    INPUTS:
+        df (pandas.DataFrame)  -> Dataset with 'country' and creator column.
+        creator_col (str)      -> Column to analyze ('director' or 'cast').
 
+    RETURNS:
+        None (displays Netflix-themed bar chart).
 
-
-def plot_creator_country_distribution(df, creator_col='director'):#Taniya
-    # """
-    # INPUTS:
-    #     df (pandas.DataFrame)  -> Dataset with 'country' and creator column.
-    #     creator_col (str)      -> Column to analyze ('director' or 'cast').
-
-    # RETURNS:
-    #     None (displays bar chart).
-
-    # PURPOSE:
-    #     Shows top countries by count of unique creators to study international
-    #     versus domestic talent distribution.
-    # """
+    PURPOSE:
+        Shows top countries by count of unique creators to study
+        international vs domestic talent distribution with a Netflix-style aesthetic.
+    """
     import seaborn as sns
     import matplotlib.pyplot as plt
+    import matplotlib as mpl
 
-    country_counts = (df[['country', creator_col]]
-                      .drop_duplicates()
-                      .country.value_counts()
-                      .head(15))
+    # Prepare data
+    country_counts = (
+        df[['country', creator_col]]
+        .drop_duplicates()
+        .country.value_counts()
+        .head(15)
+    )
 
+    # Netflix red gradient colormap
+    netflix_cmap = mpl.colors.LinearSegmentedColormap.from_list(
+        "netflix_red", ["#8B0000", "#E50914"]
+    )
+    colors = [netflix_cmap(i / (len(country_counts) - 1)) for i in range(len(country_counts))]
+
+    # Plot
     plt.figure(figsize=(8, 6))
-    sns.barplot(x=country_counts.values, y=country_counts.index, palette="crest")
-    plt.title("Top 15 Countries by Creator Count", fontsize=14)
-    plt.xlabel("Number of Creators")
+    plt.style.use("dark_background")
+    sns.barplot(
+        x=country_counts.values,
+        y=country_counts.index,
+        palette=colors
+    )
+
+    # Netflix-styled title & labels
+    plt.title("🌍 Top 15 Countries by Creator Count", fontsize=15, color="#E50914", fontweight="bold", pad=15)
+    plt.xlabel("Number of Creators", fontsize=12, color="white")
+    plt.ylabel("", color="white")
+
+    # Backgrounds
+    plt.gca().set_facecolor("#000000")
+    plt.gcf().patch.set_facecolor("#000000")
+
+    # Ticks and spines
+    plt.xticks(color="white")
+    plt.yticks(color="white")
+    for spine in plt.gca().spines.values():
+        spine.set_visible(False)
+
     plt.tight_layout()
     plt.show()
 
@@ -998,20 +1072,21 @@ def director_rating_significance(df, val_col='vote_average'):#Taniya
     else:
         print("Fail to reject H₀ → No significant difference detected.")
 
-def plot_international_vs_domestic(df, creator_col='director', home_country='United States'):#Taniya
-    # """
-    # INPUTS:
-    #     df (pandas.DataFrame)  -> Dataset with 'country' and creator column.
-    #     creator_col (str)      -> Column to analyze ('director' or 'cast').
-    #     home_country (str)     -> Country considered "domestic" (default = 'United States').
 
-    # RETURNS:
-    #     pandas.DataFrame -> Summary table of domestic vs international creator counts.
+def plot_international_vs_domestic(df, creator_col='director', home_country='United States'):  # Taniya
+    """
+    INPUTS:
+        df (pandas.DataFrame)  -> Dataset with 'country' and creator column.
+        creator_col (str)      -> Column to analyze ('director' or 'cast').
+        home_country (str)     -> Country considered "domestic" (default = 'United States').
 
-    # PURPOSE:
-    #     Compares how many unique creators are domestic vs international,
-    #     showing Netflix's global diversity of talent.
-    # """
+    RETURNS:
+        pandas.DataFrame -> Summary table of domestic vs international creator counts.
+
+    PURPOSE:
+        Compares how many unique creators are domestic vs international,
+        using a Netflix-themed red–black visualization to highlight global talent diversity.
+    """
     import seaborn as sns
     import matplotlib.pyplot as plt
     import pandas as pd
@@ -1029,42 +1104,69 @@ def plot_international_vs_domestic(df, creator_col='director', home_country='Uni
     summary = unique_creators['talent_origin'].value_counts().reset_index()
     summary.columns = ['Talent Type', 'Creator Count']
 
+    # Define Netflix-style colors
+    palette = {
+        'Domestic': '#E50914',       # Netflix red
+        'International': '#B3B3B3'   # Muted grey-white
+    }
+
     # Plot
     plt.figure(figsize=(6, 5))
-    sns.barplot(data=summary, x='Talent Type', y='Creator Count', palette='Set2')
-    plt.title(f"International vs Domestic {creator_col.capitalize()}s ({home_country})", fontsize=14)
+    plt.style.use("dark_background")
+    sns.barplot(
+        data=summary,
+        x='Talent Type',
+        y='Creator Count',
+        palette=palette
+    )
+
+    # Title & styling
+    plt.title(
+        f"🌍 International vs Domestic {creator_col.capitalize()}s ({home_country})",
+        fontsize=15,
+        color="#E50914",
+        fontweight="bold",
+        pad=15
+    )
+    plt.xlabel("")
+    plt.ylabel("Number of Unique Creators", fontsize=11, color="white")
+
+    # Backgrounds
+    plt.gca().set_facecolor("#000000")
+    plt.gcf().patch.set_facecolor("#000000")
+
+    # Text & ticks
+    plt.xticks(color="white", fontsize=11)
+    plt.yticks(color="white")
+
+    # Remove borders
+    for spine in plt.gca().spines.values():
+        spine.set_visible(False)
+
     plt.tight_layout()
     plt.show()
 
     return summary
+
 def plot_cast_frequency_distribution(df):#Taniya
-    """
-    INPUTS:
-        df (pandas.DataFrame) -> Dataset with 'cast' column.
+    
+    # INPUTS:
+    #     df (pandas.DataFrame) -> Dataset with 'cast' column.
 
-    RETURNS:
-        None (displays histogram and optional bubble chart).
+    # RETURNS:
+    #     None (displays histogram and optional bubble chart).
 
-    PURPOSE:
-        Visualizes how frequently actors appear across Netflix titles.
-        Helps understand whether a few actors dominate the catalog
-        or if the presence is evenly distributed.
-    """
+    # PURPOSE:
+    #     Visualizes how frequently actors appear across Netflix titles.
+    #     Helps understand whether a few actors dominate the catalog
+    #     or if the presence is evenly distributed.
+    
     import pandas as pd
     import seaborn as sns
     import matplotlib.pyplot as plt
 
     # Remove 'Unknown' and count frequency
     cast_counts = df[df['cast'].str.lower() != 'unknown']['cast'].value_counts()
-
-    # Histogram of appearances
-    plt.figure(figsize=(8,5))
-    sns.histplot(cast_counts, bins=30, kde=True, color='teal')
-    plt.title("Distribution of Actor Appearances on Netflix", fontsize=14)
-    plt.xlabel("Number of Titles Appeared In")
-    plt.ylabel("Number of Actors")
-    plt.tight_layout()
-    plt.show()
 
     # Optional: Bubble chart of top actors
     top_cast = cast_counts.head(30).reset_index()
@@ -1078,7 +1180,7 @@ def plot_cast_frequency_distribution(df):#Taniya
         size='Appearances',
         sizes=(100, 1000),
         alpha=0.7,
-        color='coral'
+        color='#E50914'
     )
     plt.title("Top 30 Actor Appearance Bubble Chart", fontsize=14)
     plt.xlabel("Number of Titles Appeared In")
@@ -1086,19 +1188,19 @@ def plot_cast_frequency_distribution(df):#Taniya
     plt.tight_layout()
     plt.show()
 def plot_creator_timeline(df, creator_col='director', top_n=5):#Taniya
-    """
-    INPUTS:
-        df (pandas.DataFrame) -> Dataset containing creator names and release years
-        creator_col (str) -> Column to analyze ('director' or 'cast')
-        top_n (int) -> Number of top creators to include in the timeline
+    
+    # INPUTS:
+    #     df (pandas.DataFrame) -> Dataset containing creator names and release years
+    #     creator_col (str) -> Column to analyze ('director' or 'cast')
+    #     top_n (int) -> Number of top creators to include in the timeline
 
-    RETURNS:
-        None (displays lineplot)
+    # RETURNS:
+    #     None (displays lineplot)
 
-    PURPOSE:
-        Visualizes how the content output of top creators changes over time.
-        Helps identify career trends and Netflix’s collaborations over years.
-    """
+    # PURPOSE:
+    #     Visualizes how the content output of top creators changes over time.
+    #     Helps identify career trends and Netflix’s collaborations over years.
+    
     import pandas as pd
     import seaborn as sns
     import matplotlib.pyplot as plt
@@ -1137,23 +1239,23 @@ def plot_creator_timeline(df, creator_col='director', top_n=5):#Taniya
     plt.tight_layout()
     plt.show()
 def compute_entropy(df, entity_col, category_col):#Taniya
-    """
-    Computes Shannon Entropy for any categorical pair (e.g., Director–Genre, Actor–Genre, Country–Category).
+    # """
+    # Computes Shannon Entropy for any categorical pair (e.g., Director–Genre, Actor–Genre, Country–Category).
 
-    INPUTS:
-        df (pandas.DataFrame) -> dataset containing both categorical columns
-        entity_col (str) -> column name representing the entity (e.g., 'director', 'actor', 'country')
-        category_col (str) -> column name representing the category (e.g., 'listed_in', 'genre', 'category')
+    # INPUTS:
+    #     df (pandas.DataFrame) -> dataset containing both categorical columns
+    #     entity_col (str) -> column name representing the entity (e.g., 'director', 'actor', 'country')
+    #     category_col (str) -> column name representing the category (e.g., 'listed_in', 'genre', 'category')
 
-    RETURNS:
-        pd.DataFrame -> DataFrame with columns:
-                        [entity_col, 'entropy', 'num_records']
+    # RETURNS:
+    #     pd.DataFrame -> DataFrame with columns:
+    #                     [entity_col, 'entropy', 'num_records']
 
-    PURPOSE:
-        Quantifies specialization or diversity for each entity.
-        - Low entropy → specialized in fewer categories
-        - High entropy → diversified across many categories
-    """
+    # PURPOSE:
+    #     Quantifies specialization or diversity for each entity.
+    #     - Low entropy → specialized in fewer categories
+    #     - High entropy → diversified across many categories
+    # """
     import pandas as pd
     import numpy as np
 
@@ -1188,37 +1290,58 @@ def compute_entropy(df, entity_col, category_col):#Taniya
     entropy_df = entropy_df.merge(num_records, on=entity_col, how='left')
 
     return entropy_df.sort_values(by='entropy', ascending=False)
-def plot_entropy(entropy_df, entity_col, top_n=10):#Taniya
-    """
-    Plots top and bottom N entities based on entropy (diversity).
 
-    INPUTS:
-        entropy_df (pd.DataFrame) -> DataFrame returned from compute_entropy()
-        entity_col (str) -> entity column name (e.g., 'director', 'actor')
-        top_n (int) -> number of top and bottom entities to visualize
+def plot_entropy(entropy_df, entity_col, top_n=10):  # Taniya
+    
+    # Plots top and bottom N entities based on entropy (diversity) 
+    # in a Netflix-themed color scheme.
 
-    RETURNS:
-        None (displays two bar charts)
-    """
+    # INPUTS:
+    #     entropy_df (pd.DataFrame) -> DataFrame returned from compute_entropy()
+    #     entity_col (str) -> entity column name (e.g., 'director', 'actor')
+    #     top_n (int) -> number of top and bottom entities to visualize
+
+    # RETURNS:
+    #     None (displays two Netflix-themed bar charts)
+   
     import seaborn as sns
     import matplotlib.pyplot as plt
+    import matplotlib as mpl
 
-    # Highest and lowest entropy entities
+    # Prepare data
     top_diverse = entropy_df.head(top_n)
     top_specialized = entropy_df.tail(top_n)
 
+    # Netflix gradients
+    red_gradient = mpl.colors.LinearSegmentedColormap.from_list(
+        "netflix_red", ["#8B0000", "#E50914"]
+    )
+    dark_gradient = mpl.colors.LinearSegmentedColormap.from_list(
+        "netflix_darkred", ["#333333", "#8B0000"]
+    )
+
+    # --- Plot 1: Top Diverse Entities (High Entropy) ---
     plt.figure(figsize=(10, 6))
-    sns.barplot(data=top_diverse, x='entropy', y=entity_col, color='skyblue')
-    plt.title(f"Top {top_n} Most Diverse {entity_col.title()}s (High Entropy)")
-    plt.xlabel("Entropy (Diversity)")
-    plt.ylabel(entity_col.title())
+    plt.style.use("dark_background")
+    sns.barplot(
+        data=top_diverse,
+        x='entropy',
+        y=entity_col,
+        palette=[red_gradient(i / top_n) for i in range(top_n)]
+    )
+    plt.title(f"🔥 Top {top_n} Most Diverse {entity_col.title()}s (High Entropy)",
+              fontsize=15, color="#E50914", fontweight="bold", pad=15)
+    plt.xlabel("Entropy (Diversity)", fontsize=12, color="white")
+    plt.ylabel(entity_col.title(), fontsize=12, color="white")
+
+    # Style adjustments
+    plt.gca().set_facecolor("#000000")
+    plt.gcf().patch.set_facecolor("#000000")
+    plt.xticks(color="white")
+    plt.yticks(color="white")
+    for spine in plt.gca().spines.values():
+        spine.set_visible(False)
     plt.tight_layout()
     plt.show()
 
-    plt.figure(figsize=(10, 6))
-    sns.barplot(data=top_specialized, x='entropy', y=entity_col, color='salmon')
-    plt.title(f"Top {top_n} Most Specialized {entity_col.title()}s (Low Entropy)")
-    plt.xlabel("Entropy (Diversity)")
-    plt.ylabel(entity_col.title())
-    plt.tight_layout()
     plt.show()
