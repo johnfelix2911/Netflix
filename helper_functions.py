@@ -435,6 +435,77 @@ def generate_interactive_scatter(df, x, y, color=None, hover=None): # John
 
     fig.show()
 
+def bar_stacked(   # Sourendra
+    df,
+    *,
+    title: str = "Stacked Bar Chart",
+    xlabel: str = "",
+    ylabel: str = "Count",
+    color: list | None = None,
+    legend_title: str = "Type",
+    figsize: tuple = (20, 10),
+    rotation: int = 45,
+    show: bool = True,
+    save_path: str | None = None,
+):
+    """
+    Draws a stacked bar chart from a given DataFrame.
+
+    Inputs:-
+    ----------
+    1) df : pd.DataFrame
+        DataFrame where each column represents a category to be stacked.
+        The index will be used as x-axis labels.
+
+    2) title : str, default = "Stacked Bar Chart"
+        Title of the bar chart.
+
+    3) xlabel, ylabel : str
+        Labels for the x-axis and y-axis.
+
+    4) color : list, optional
+        List of color codes to use for the bars.
+        If None, matplotlib will assign default colors.
+
+    5) legend_title : str, default = "Type"
+        Title displayed on the legend.
+
+    6) figsize : tuple, default = (20, 10)
+        Figure size for the chart.
+
+    7) rotation : int, default = 45
+        Rotation angle for x-axis tick labels.
+
+    8) show : bool, default = True
+        Whether to display the chart immediately.
+
+    9) save_path : str, optional
+        If provided, saves the plot to the given path.
+
+    """
+    import matplotlib.pyplot as plt
+    import pandas as pd
+
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("Expected input 'df' to be a pandas DataFrame.")
+
+    # --- Plot the stacked bar chart ---
+    ax = df.plot(kind="bar", stacked=True, figsize=figsize, color=color)
+
+    ax.set_title(title, fontsize=16)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.legend(title=legend_title)
+    plt.xticks(rotation=rotation)
+    plt.tight_layout()
+
+    # --- Save or show ---
+    if save_path:
+        plt.savefig(save_path, bbox_inches="tight", dpi=300)
+    if show:
+        plt.show()
+    return ax
+
 def generate_line_chart( #Daksh
     s,
     *,
