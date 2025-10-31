@@ -1483,7 +1483,6 @@ def generate_styled_boxplot(df, cat, val, outlier=True): # Taniya
     import pandas as pd
     import numpy as np
 
-    # computes median value per genre
     genre_medians = df.groupby(cat)[val].median().sort_values(ascending=False)
 
     plt.figure(figsize=(20, 10))
