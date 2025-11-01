@@ -93,7 +93,7 @@ def load_data(path: str):
     return df, titles_df
 
 # change file name if needed
-df_exp, titles_df = load_data("final_cleaned_main.csv")
+df_exp, titles_df = load_data("/Users/dakshj/Desktop/IIT KGP/Semesters/Sem 5/Open IIT DATA/final_cleaned_main.csv")
 
 # ---------------------------------------------------------------------
 # SIDEBAR FILTERS (these must work on exploded df)
