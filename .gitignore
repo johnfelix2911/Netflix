@@ -1,7 +1,10 @@
 # ===============================
 # Python and Jupyter Git Ignore
 # ===============================
-
+# Ignore local-only analysis and data files
+content_creator_analysis.ipynb
+final_cleaned_main.csv
+content_creator_analysis.py
 # Ignore Jupyter Notebook files
 *.ipynb
 
@@ -37,6 +40,7 @@ dist/
 *.tmp
 *.swp
 
+
 # Ignore system files
 .DS_Store
 Thumbs.db
@@ -50,5 +54,8 @@ htmlcov/
 .coverage
 .pytest_cache/
 
+
 # folders to ve ignored
 Data/
+"content_creator_analysis.py"
+"final_cleaned_main.csv"
