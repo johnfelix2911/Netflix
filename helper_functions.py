@@ -191,6 +191,7 @@ def pie_by_count(   #Daksh
     import pandas as pd
     import seaborn as sns
     import numpy as np
+
     if column not in df.columns:
         raise KeyError(f"'{column}' not in dataframe columns")
 
@@ -209,7 +210,8 @@ def pie_by_count(   #Daksh
         autopct=autopct,
         startangle=startangle,
     )
-    ax.set_title(title)
+    plt.figtext(0.5, 0.08, title, 
+            wrap=True, horizontalalignment='center', fontsize=12)
     ax.axis("equal")
     if show:
         plt.show()
@@ -218,6 +220,7 @@ def barh_top_counts_series(   #Daksh
     s,
     *,
     title: str = "Top Categories (Count & Share)",
+    figtitle,
     xlabel: str = "Count",
     color: str = "#E50914",
     fontsize: int = 10,
@@ -234,6 +237,8 @@ def barh_top_counts_series(   #Daksh
     2)title : string
     3)xlabel : string
     4)color : string
+    5)figtitle : string
+        Figure title.
         Bar color.
     """
     import matplotlib.pyplot as plt
@@ -262,6 +267,8 @@ def barh_top_counts_series(   #Daksh
         ax.text(v, i, f" {v} ({pct:.1%})", va="center", color="#111", fontsize=fontsize)
 
     ax.set(title=title, xlabel=xlabel, ylabel="")
+    plt.figtext(0.5, 0, figtitle, 
+            wrap=True, horizontalalignment='center', fontsize=12)
     plt.tight_layout()
 
     if show:
@@ -581,6 +588,7 @@ def generate_line_chart( #Daksh
     xlabel="Month",
     ylabel="Number of Titles Added",
     figsize=(10, 5),
+    figtitle,
     marker=".",
     color="red", 
     markerfacecolor="black",
@@ -613,6 +621,8 @@ def generate_line_chart( #Daksh
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.grid(True, alpha=grid_alpha)
+    plt.figtext(0.5, 0, figtitle, 
+            wrap=True, horizontalalignment='center', fontsize=12)
     fig.tight_layout()
     plt.show()
 def chi_square_test(df, col1, col2):#Taniya
