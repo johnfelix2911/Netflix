@@ -18,7 +18,6 @@ def generate_boxplot(df,cat,val,outlier=True): # John
     import seaborn as sns
     import pandas as pd
     import numpy as np
-    import sklearn
     # computes median value per genre
     genre_medians = df.groupby(cat)[val].median().sort_values(ascending=False)
     
