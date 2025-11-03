@@ -272,6 +272,71 @@ def barh_top_counts_series(   #Daksh
     if show:
         plt.show()
 
+def barh_top_counts_series_black_background(   #Daksh
+    s,
+    *,
+    title: str = "Top Categories (Count & Share)",
+    # figtitle,
+    xlabel: str = "Count",
+    color: str = "#E50914",
+    fontsize: int = 10,
+    x_margin: float = 0.12,
+    total: int | None = None,   # denominator for percentages; default = s.sum()
+    show: bool = True,
+    save_path: str | None = None,
+):
+    """
+    Draw a horizontal bar chart from a counts Series (index=labels, values=counts).
+    Inputs:-
+    1)s : pd.Series
+        Series of counts (index=labels, values=counts).
+    2)title : string
+    3)xlabel : string
+    4)color : string
+    5)figtitle : string
+        Figure title.
+        Bar color.
+    """
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import numpy as np
+    import seaborn as sns
+    if not isinstance(s, pd.Series):
+        raise TypeError("Expected a pandas Series of counts.")
+
+    # Use provided Series;
+    s_plot = s.sort_values(ascending=False)
+
+    denom = total if total is not None else int(s_plot.sum())
+
+    # Reverse for largest at top in barh
+    labels = s_plot.index[::-1].astype(str)
+    values = s_plot.values[::-1]
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    ax.barh(labels, values, color=color)
+    ax.margins(x=x_margin)
+
+    #set background to black
+    ax.set_facecolor("#000000")  
+    fig.patch.set_facecolor("#000000")
+
+    # Annotate: "count (pct)"
+    for i, v in enumerate(values):
+        pct = (v / denom) if denom else 0.0
+        ax.text(v, i, f" {v} ({pct:.1%})", va="center", color="white", fontsize=fontsize)
+    ax.tick_params(colors="white")
+    for spine in ax.spines.values():
+        spine.set_color("white")
+    ax.set_title(title,color="white") 
+    ax.set_xlabel(xlabel,color="white")
+    # plt.figtext(0.5, 0, figtitle, 
+    #         wrap=True, horizontalalignment='center', fontsize=12)
+    plt.tight_layout()
+
+    if show:
+        plt.show()
+
 def genre_wordcloud(df, col='genres', title='Genre Popularity Word Cloud'): # John
     """
     Generate and display a word cloud of popular genres (or any categorical feature).
@@ -1008,7 +1073,7 @@ def generate_line_chart( #Daksh
     3)xlabel : string
         Label for the x-axis.
     4)ylabel : string
-        Label for the y-axis.
+        Label for the y-axis. 
     """
     import matplotlib.pyplot as plt
     import pandas as pd
@@ -1026,6 +1091,56 @@ def generate_line_chart( #Daksh
     plt.figtext(0.5, 0, figtitle, 
             wrap=True, horizontalalignment='center', fontsize=12)
     fig.tight_layout()
+    plt.show()
+
+def plot_treemap_from_series(
+    s,
+    *,
+    # title="Top 15 Genres / Categories",
+    caption="Figure 1: Genre Treemap (Netflix-style)",
+    figsize=(10, 6),
+):
+    """
+    Plot a treemap from a pandas Series of counts.
+    s.index -> labels
+    s.values -> sizes
+    """
+    import matplotlib.pyplot as plt
+    import squarify
+    # netflix-ish palette (light → dark)
+    colors = ["#E50914", "#B20710", "#831010", "#6B0F0F", "#4A0C0C"] * 5
+
+    labels = [f"{lbl}\n{s[lbl]}" for lbl in s.index]
+    sizes = s.values
+
+    fig, ax = plt.subplots(figsize=figsize)
+    # black background for Netflix vibe
+    ax.set_facecolor("#141414")
+    fig.patch.set_facecolor("#141414")
+
+    squarify.plot(
+        sizes=sizes,
+        label=labels,
+        color=colors[:len(sizes)],
+        alpha=1.0,
+        text_kwargs={"color": "white", "fontsize": 10}
+    )
+    # ax.set_title(title, color="white", fontsize=14, pad=12)
+    ax.axis("off")
+
+    # make room at bottom for caption
+    plt.tight_layout(rect=[0, 0.05, 1, 1])
+
+    # caption at bottom, centered
+    fig.text(
+        0.5, 0.01,
+        caption,
+        ha="center",
+        va="bottom",
+        color="white",
+        fontsize=9,
+    )
+
     plt.show()
 def chi_square_test(df, col1, col2):#Taniya
     """
