@@ -2774,3 +2774,203 @@ def plot_movie_coproduction_heatmap(df, top_n): # Aditya
     plt.yticks(rotation=0)
     plt.tight_layout()
     plt.show()
+
+def plot_wordcloud(df,col,save=False):
+    # plots the word cloud of the discrete data column "col"
+    # df : dataframe
+    # col : column for which you want the wordcloud to be plotted (discrete)
+    # save : set as true if you want the figure to be saved in your current working directory
+    from wordcloud import WordCloud
+    import matplotlib.pyplot as plt
+
+    # Combine all genres into a single string
+    text = ' '.join([genre for sublist in df[col] 
+                    for genre in ([sublist] if isinstance(sublist, str) else sublist)])
+
+    # Define a custom color function (Netflix red)
+    def netflix_red_color_func(*args, **kwargs):
+        return "#E50914"
+
+    # Create the WordCloud
+    wordcloud = WordCloud(
+        width=800,
+        height=400,
+        background_color='white',  # Black background makes red pop
+        color_func=netflix_red_color_func
+    ).generate(text)
+
+    # Plot the WordCloud
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    plt.title('', fontsize=16, color='#E50914')
+    if save:
+        plt.savefig(col+'_wordcloud.png')
+    plt.show()
+
+def plot_categorywise_corr(df,col1,col2,cat,save=False,sorted=False):
+    # plots the correlation coeff between col1 and col2 for each cat
+    # df : dataframe
+    # col1 : column 1 (continuous)
+    # col2 : column 2 (continuous)
+    # cat : category column (discrete)
+    # save : set as true if you want to save the fig
+    # sorted : set as true if you want the plot to be sorted in ascending order
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+    genre_corr = (
+        df
+        .groupby(cat)
+        .apply(lambda x: x[col1].corr(x[col2]))
+        .sort_values(ascending=sorted)
+    )
+    plt.figure(figsize=(12, 6))
+    genre_corr.plot(kind='bar', color='red', edgecolor='black')
+
+    plt.title("Correlation between "+col1+" and "+col2+" per "+cat, fontsize=16)
+    plt.xlabel(cat, fontsize=14)
+    plt.ylabel("Pearson Correlation", fontsize=14)
+    plt.xticks(rotation=45, ha='right', fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.tight_layout()
+    if save:
+        plt.savefig('correlation between '+col1+' and '+col2+' per '+cat+'.png')
+    plt.show()
+
+def plot_change_over_time(df,var,time,cat):
+
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+    popularity_trend = (
+        df
+        .groupby([cat, time])[var]
+        .mean()
+        .reset_index()
+    )
+
+    fig = px.line(
+        popularity_trend,
+        x=time,
+        y=var,
+        color=cat,
+        markers=True, 
+        title="Change in "+var+" Over Time by "+cat,
+        color_discrete_sequence=px.colors.qualitative.Light24 
+    )
+
+    fig.update_layout(
+        width=1100,
+        height=650,
+        template='plotly_dark',
+        title_font=dict(size=22, color='white'),
+        xaxis_title=time,
+        yaxis_title='Average '+var,
+        legend_title=cat,
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+        legend=dict(
+            title=cat,
+            orientation='v',
+            yanchor='top',
+            y=1,
+            xanchor='left',
+            x=1.02
+        )
+    )
+
+    fig.update_xaxes(
+        tickmode='linear',
+        tick0=popularity_trend[time].min(),
+        dtick=1
+    )
+
+    fig.show()
+
+def plot_number_across_time(df,cat,time):
+
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+    movie_counts = (
+        df.groupby([time, cat])
+        .size()
+        .reset_index(name='num_movies')
+    )
+
+    fig = px.line(
+        movie_counts,
+        x=time,
+        y='num_movies',
+        color=cat, 
+        title='Number of Movies Released per Year by '+cat,
+        color_discrete_sequence=px.colors.qualitative.Set3 
+    )
+
+    fig.update_layout(
+        width=1000,
+        height=600,
+        template='plotly_dark',
+        title_font=dict(size=22, color='white'),
+        xaxis_title=time,
+        yaxis_title='Number of Movies',
+        legend_title=cat,
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+    )
+
+    fig.show()
+
+def cumulative_number_plot(df,time,cat):
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+    movie_counts = (
+        df.groupby([time, cat])
+        .size()
+        .reset_index(name='num_movies')
+    )
+
+    movie_counts['cumulative_movies'] = (
+        movie_counts
+        .groupby(cat)['num_movies']
+        .cumsum()  
+    )
+
+    fig = px.line(
+        movie_counts,
+        x=time,
+        y='cumulative_movies',
+        color=cat,
+        markers=True,
+        title='Cumulative Number of Movies Released Over Time by '+cat,
+        color_discrete_sequence=px.colors.qualitative.Light24  
+    )
+
+    fig.update_layout(
+        width=1100,
+        height=650,
+        template='plotly_dark',
+        title_font=dict(size=22, color='white'),
+        xaxis_title=time,
+        yaxis_title='Cumulative Number of Movies (till that year)',
+        legend_title=cat,
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+        legend=dict(
+            orientation='v',
+            yanchor='top',
+            y=1,
+            xanchor='left',
+            x=1.02
+        )
+    )
+
+    fig.update_xaxes(
+        tickmode='linear',
+        tick0=movie_counts[time].min(),
+        dtick=1
+    )
+
+    fig.show()
