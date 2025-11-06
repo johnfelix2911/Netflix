@@ -156,7 +156,219 @@ def LSD_test(df,level,val,SSE,alpha=0.05): # John
                     else:
                         dic[g2].append(g1)
     return dic
+def tv_genre_rating_sentiment_scatter( #Daksh
+    df,
+    x_col="avg_rating",
+    y_col="avg_sent",
+    size_col="tv_show_count",
+    label_col="genres",
+    title="TV Genres on Netflix: Rating vs Sentiment (VADER)",
+    width=1000,
+    height=650,
+):
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+    import numpy as np
+    import plotly.express as px
+    fig = px.scatter(
+        df,
+        x=x_col,
+        y=y_col,
+        size=size_col,
+        color=y_col,
+        color_continuous_scale=["#E50914", "#B20710", "#FFFFFF"],
+        hover_data={
+            label_col: True,
+            x_col: ":.2f",
+            y_col: ":.3f",
+            size_col: True,
+        },
+        title=title,
+    )
 
+    fig.update_traces(
+        marker=dict(line=dict(width=1, color="white")),
+        selector=dict(mode="markers"),
+    )
+
+    fig.update_layout(
+        width=width,
+        height=height,
+        template="plotly_dark",
+        title_font=dict(size=22, color="white"),
+        xaxis_title="Average Rating",
+        yaxis_title="Average Sentiment (compound)",
+        plot_bgcolor="#141414",
+        paper_bgcolor="#141414",
+        coloraxis_colorbar=dict(title="Avg Sentiment", tickfont=dict(color="white")),
+    )
+    return fig
+def tv_genre_popularity_sentiment_scatter(#Daksh
+    df,
+    x_col="avg_popularity",
+    y_col="avg_sent",
+    size_col="tv_show_count",
+    label_col="genres",
+    title="TV Show Genres on Netflix: Popularity vs Sentiment (VADER)",
+    width=1000,
+    height=650,
+):
+    """
+    Bubble scatter for TV genres: popularity vs sentiment.
+    df must contain [x_col, y_col, size_col, label_col].
+    """
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+    import numpy as np
+    import plotly.express as px
+    fig = px.scatter(
+        df,
+        x=x_col,
+        y=y_col,
+        size=size_col,
+        color=y_col,
+        color_continuous_scale=["#E50914", "#B20710", "#FFFFFF"],  # netflix-ish
+        hover_data={
+            label_col: True,
+            x_col: ":.2f",
+            y_col: ":.3f",
+            size_col: True,
+        },
+        title=title,
+    )
+
+    fig.update_traces(
+        marker=dict(line=dict(width=1, color="white")),
+        selector=dict(mode="markers"),
+    )
+
+    fig.update_layout(
+        width=width,
+        height=height,
+        template="plotly_dark",
+        title_font=dict(size=22, color="white"),
+        xaxis_title="Average Popularity",
+        yaxis_title="Average Sentiment (compound)",
+        plot_bgcolor="#141414",
+        paper_bgcolor="#141414",
+        coloraxis_colorbar=dict(title="Avg Sentiment", tickfont=dict(color="white")),
+    )
+    return fig
+def genre_rating_sentiment_scatter( #Daksh
+    df,
+    x_col="avg_rating",
+    y_col="avg_sent",
+    size_col="movie_count",
+    label_col="genres",
+    title="Movie Genres on Netflix: Rating vs Sentiment (VADER)",
+    width=1000,
+    height=650,
+):
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+    import numpy as np
+    import plotly.express as px
+    fig = px.scatter(
+        df,
+        x=x_col,
+        y=y_col,
+        size=size_col,
+        color=y_col,
+        color_continuous_scale=["#E50914", "#B20710", "#FFFFFF"],  # netflix-ish
+        hover_data={
+            label_col: True,
+            x_col: ":.2f",
+            y_col: ":.3f",
+            size_col: True,
+        },
+        title=title,
+    )
+
+    fig.update_traces(
+        marker=dict(line=dict(width=1, color="white")),
+        selector=dict(mode="markers"),
+    )
+
+    fig.update_layout(
+        width=width,
+        height=height,
+        template="plotly_dark",
+        title_font=dict(size=22, color="white"),
+        xaxis_title="Average Rating",
+        yaxis_title="Average Sentiment (compound)",
+        plot_bgcolor="#141414",
+        paper_bgcolor="#141414",
+        coloraxis_colorbar=dict(title="Avg Sentiment", tickfont=dict(color="white")),
+    )
+    return fig
+def genre_popularity_sentiment_scatter(#Daksh
+    df,
+    x_col="avg_popularity",
+    y_col="avg_sent",
+    size_col="movie_count",
+    label_col="genres",
+    title="Movie Genres on Netflix: Popularity vs Sentiment (VADER)",
+    width=1000,
+    height=650,
+):
+    """
+    Build a bubble scatter of genre popularity vs sentiment.
+
+    Parameters
+    ----------
+    df : DataFrame with columns [x_col, y_col, size_col, label_col]
+    x_col : str, column for x-axis (e.g., "avg_popularity")
+    y_col : str, column for y-axis (e.g., "avg_sent")
+    size_col : str, bubble size column (e.g., "movie_count")
+    label_col : str, label shown on hover (e.g., "genres")
+    title : str, chart title
+    width, height : int, figure size
+
+    Returns
+    -------
+    plotly.graph_objects.Figure
+    """
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+    import numpy as np
+    import plotly.express as px
+    fig = px.scatter(
+        df,
+        x=x_col,
+        y=y_col,
+        size=size_col,
+        color=y_col,
+        color_continuous_scale=["#E50914", "#B20710", "#FFFFFF"],  # netflix-ish
+        hover_data={
+            label_col: True,
+            x_col: ":.2f",
+            y_col: ":.3f",
+            size_col: True,
+        },
+        title=title,
+    )
+
+    fig.update_traces(
+        marker=dict(line=dict(width=1, color="white")),
+        selector=dict(mode="markers"),
+    )
+
+    fig.update_layout(
+        width=width,
+        height=height,
+        template="plotly_dark",
+        title_font=dict(size=22, color="white"),
+        xaxis_title="Average Popularity",
+        yaxis_title="Average Sentiment (compound)",
+        plot_bgcolor="#141414",
+        paper_bgcolor="#141414",
+        coloraxis_colorbar=dict(title="Avg Sentiment", tickfont=dict(color="white")),
+    )
+    return fig
 def pie_by_count(   #Daksh
     df,
     column="type",
