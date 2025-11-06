@@ -336,7 +336,29 @@ def barh_top_counts_series_black_background(   #Daksh
 
     if show:
         plt.show()
+def plot_sentiment_by_genre(sent_pivot,title): #Daksh
+    """
+    Plot stacked sentiment distribution across genres (Netflix style).
+    sent_pivot: index=genre, columns=['positive','neutral','negative'], values=%
+    """
+    import matplotlib.pyplot as plt
+    sent_pivot = sent_pivot[["positive", "neutral", "negative"]]
 
+    ax = sent_pivot.plot(
+        kind="bar",
+        stacked=True,
+        figsize=(12, 6),
+        color=["#E50914", "#221F1F", "#B3B3B3"],  # netflix-ish
+        edgecolor="white",
+    )
+
+    plt.ylabel("% of titles")
+    plt.title(title, fontsize=14, weight="bold")
+    plt.xticks(rotation=45, ha="right")
+    plt.legend(title="Sentiment", bbox_to_anchor=(1.0, 1.0))
+    plt.tight_layout()
+    plt.show()
+    
 def genre_wordcloud(df, col='genres', title='Genre Popularity Word Cloud'): # John
     """
     Generate and display a word cloud of popular genres (or any categorical feature).
