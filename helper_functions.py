@@ -1064,12 +1064,12 @@ def generate_heatmap_flexible(      #Sourendra
     plt.title(title, fontsize=16, pad=12, weight="bold")
     plt.xlabel(xlabel, fontsize=12)
     plt.ylabel(ylabel, fontsize=12)
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=0)
     plt.yticks(rotation=0)
     plt.tight_layout()
     plt.show()
 
-#     print(f"✅ Bar chart race saved as: {filename}")
+    #     print(f"✅ Bar chart race saved as: {filename}")
 def generate_line_chart( #Daksh
     s,
     *,
