@@ -2974,3 +2974,91 @@ def cumulative_number_plot(df,time,cat):
     )
 
     fig.show()
+
+def sunburst_plot(df,cat1,cat2):
+
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+
+    # If the column contains lists, explode it
+    if df[cat1].apply(lambda x: isinstance(x, list)).any():
+        df = df.explode(cat1).reset_index(drop=True)
+
+    if df[cat2].apply(lambda x: isinstance(x, list)).any():
+        df = df.explode(cat2).reset_index(drop=True)
+
+    genre_lang_counts = (
+        df.groupby([cat1, cat2])
+        .size()
+        .reset_index(name='num_movies')
+    )
+
+    fig = px.sunburst(
+        genre_lang_counts,
+        path=[cat1, cat2], 
+        values='num_movies',
+        color=cat1,
+        color_discrete_sequence=[
+            '#E50914', '#B20710', '#F40612', '#FF0A16', '#A60311',
+            '#CC0E14', '#99000D', '#FF1E22', '#B81D24', '#E50914'
+        ],
+        title='Movies by '+cat1+' and '+cat2
+    )
+
+    fig.update_layout(
+        width=1000,
+        height=1000,
+        template='plotly_dark',
+        title_font=dict(size=24, color='white', family='Arial Black'),
+        font=dict(color='white'),
+        paper_bgcolor='#141414', 
+        plot_bgcolor='#141414',
+        margin=dict(t=80, l=0, r=0, b=0)
+    )
+
+    fig.update_traces(
+        hoverlabel=dict(bgcolor='white', font_color='black'),
+        textfont=dict(color='white', size=12),
+        insidetextorientation='radial'
+    )
+
+    fig.show()
+
+def plot_top20(dic,cat,var):
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+    df_genres = pd.DataFrame(list(dic.items()), columns=[cat+' Combination', 'Average_'+var])
+
+    df_top20 = df_genres.sort_values(by='Average_'+var, ascending=False).head(20)
+
+    fig = px.bar(
+        df_top20,
+        x=cat+' Combination',
+        y='Average_'+var,
+        text='Average_'+var,
+        title='Top 20 '+cat+' by Average '+var,
+    )
+
+    fig.update_traces(
+        marker_color='#E50914',    
+        texttemplate='%{text:.2f}',
+        textposition='outside'
+    )
+
+    fig.update_layout(
+        width=1000,
+        height=600,
+        template='plotly_dark',
+        title_font=dict(size=24, color='white', family='Arial Black'),
+        xaxis_title=cat+' Combination',
+        yaxis_title='Average '+var,
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+        xaxis=dict(tickangle=45, tickfont=dict(size=12, color='white')),
+        yaxis=dict(tickfont=dict(color='white')),
+    )
+
+    fig.show()
+
