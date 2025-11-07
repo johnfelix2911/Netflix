@@ -54,13 +54,12 @@ st.markdown(
 )
 
 # ---------------------------------------------------------------------
-# LOAD DATA (exploded version)
+# LOAD DATA 
 # ---------------------------------------------------------------------
 @st.cache_data
 def load_data(path: str):
     df = pd.read_csv(path)
 
-    # your columns (exploded): country, cast, listed_in, director
     # parse dates
     if "date_added" in df.columns:
         df["date_added"] = pd.to_datetime(df["date_added"], errors="coerce")
@@ -70,13 +69,11 @@ def load_data(path: str):
         df["year_added"] = np.nan
         df["month_added"] = np.nan
 
-    # we already have atomic country, so just clean
     if "country" in df.columns:
         df["country_clean"] = df["country"].fillna("Unknown").str.strip()
     else:
         df["country_clean"] = "Unknown"
 
-    # we already have atomic listed_in (1 row = 1 category)
     if "listed_in" in df.columns:
         df["category_clean"] = df["listed_in"].fillna("Unknown").str.strip()
     else:
@@ -92,11 +89,10 @@ def load_data(path: str):
 
     return df, titles_df
 
-# change file name if needed
-df_exp, titles_df = load_data("final_cleaned_main.csv")
+df_exp, titles_df = load_data("/Users/dakshj/Desktop/IIT KGP/Semesters/Sem 5/Open IIT DATA/final_cleaned_main.csv")
 
 # ---------------------------------------------------------------------
-# SIDEBAR FILTERS (these must work on exploded df)
+# SIDEBAR FILTERS 
 # ---------------------------------------------------------------------
 with st.sidebar:
     st.markdown("## 🎬 Global Filters")
@@ -117,11 +113,11 @@ with st.sidebar:
         default=sorted(type_opts)
     )
 
-    # country (exploded → easy)
+    # country
     country_opts = ["All"] + sorted(df_exp["country_clean"].dropna().unique().tolist())
     country_sel = st.selectbox("Country", country_opts, index=0)
 
-    # genre/category (exploded)
+    # genre/category 
     genre_opts = ["All"] + sorted(df_exp["category_clean"].dropna().unique().tolist())
     genre_sel = st.selectbox("Category / Genre", genre_opts, index=0)
 
@@ -131,12 +127,6 @@ with st.sidebar:
 
 
 def apply_filters(df_exp: pd.DataFrame, titles_df: pd.DataFrame):
-    """
-    We will:
-    1. Filter exploded df on country/category
-    2. From there, limit to show_ids that satisfy year + type (from titles_df)
-    This avoids double counting and keeps logic clean.
-    """
     dfe = df_exp.copy()
 
     # 1) explode-level filters
@@ -145,7 +135,7 @@ def apply_filters(df_exp: pd.DataFrame, titles_df: pd.DataFrame):
     if genre_sel != "All":
         dfe = dfe[dfe["category_clean"] == genre_sel]
 
-    # 2) now enforce year + type using titles_df
+    # 2) Enforce year + type using titles_df
     td = titles_df.copy()
     if year_filter:
         td = td[td["year_added"].isin(year_filter)]
@@ -155,7 +145,7 @@ def apply_filters(df_exp: pd.DataFrame, titles_df: pd.DataFrame):
     valid_ids = set(td["show_id"].tolist())
     dfe = dfe[dfe["show_id"].isin(valid_ids)]
 
-    # ALSO produce a deduped titles view of THIS filtered exploded df
+    # Produce a deduped titles view of THIS filtered exploded df
     titles_filtered = (
         dfe.sort_values("show_id")
            .drop_duplicates(subset=["show_id"])
@@ -220,7 +210,7 @@ with tabs[0]:
     # growth calc: based on titles_f
     if titles_f["year_added"].notna().any():
         last_year = int(titles_f["year_added"].max())
-        prev_year = last_year - 1
+        prev_year = last_year-1
         ly_ct = titles_f.loc[titles_f["year_added"] == last_year, "show_id"].nunique()
         py_ct = titles_f.loc[titles_f["year_added"] == prev_year, "show_id"].nunique()
         if py_ct == 0:
@@ -302,7 +292,7 @@ with tabs[0]:
 # =========================================================
 with tabs[1]:
     st.markdown('<p class="netflix-title">Content Explorer</p>', unsafe_allow_html=True)
-    st.markdown("Search & export **unique titles**. (Exploded rows → grouped back.)")
+    st.markdown("Search & export **unique titles**.")
 
     col1, col2, col3 = st.columns([1.4, 1, 1])
     with col1:
@@ -354,7 +344,7 @@ with tabs[1]:
 # =========================================================
 with tabs[2]:
     st.markdown('<p class="netflix-title">Trend Intelligence</p>', unsafe_allow_html=True)
-    st.markdown("Time-series based on **unique titles** (not exploded).")
+    st.markdown("Time-series based on **unique titles**.")
 
     if titles_f["year_added"].notna().any():
         trend = (
@@ -428,7 +418,6 @@ with tabs[2]:
 # =========================================================
 with tabs[3]:
     st.markdown('<p class="netflix-title">Geographic Insights</p>', unsafe_allow_html=True)
-    st.markdown("Exploded data → one row per (title, country) → perfect for geo counts.")
 
     geo = (
         df_f_exp.groupby("country_clean")["show_id"]
@@ -454,7 +443,6 @@ with tabs[3]:
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("*(Add choropleth here if you map to ISO codes.)*")
 
 # =========================================================
 # TAB 5: GENRE & CATEGORY INTELLIGENCE
@@ -462,7 +450,7 @@ with tabs[3]:
 with tabs[4]:
     st.markdown('<p class="netflix-title">Genre & Category Intelligence</p>', unsafe_allow_html=True)
 
-    # popularity from exploded (count unique titles per category)
+    # popularity from exploded 
     cat_pop = (
         df_f_exp.groupby("category_clean")["show_id"]
         .nunique()
@@ -481,9 +469,8 @@ with tabs[4]:
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("#### Category Co-occurrence (rebuild from exploded)")
-    # even though listed_in is exploded, we can group it back
-    # each show_id → array of categories
+    st.markdown("#### Category Co-occurrence")
+
     grouped_cats = (
         df_exp.groupby("show_id")["listed_in"]
         .apply(lambda x: sorted(set(x.dropna().tolist())))
@@ -536,11 +523,10 @@ with tabs[5]:
     df_dir_safe = df_f_exp.copy()
     df_dir_safe["director"] = df_dir_safe["director"].astype(str).str.strip()
     df_dir_safe["cast"] = df_dir_safe["cast"].astype(str).str.strip()
-
+    df_dir_safe=df_dir_safe[df_dir_safe["director"].ne("Unknown")]
     # 2) Top directors (by occurrences in exploded df)
     top_dir = (
         df_dir_safe["director"]
-        .fillna("Unknown")
         .value_counts()
         .head(15)
         .reset_index()
@@ -601,9 +587,5 @@ with tabs[5]:
 with tabs[6]:
     st.markdown('<p class="netflix-title">Strategic Recommendations</p>', unsafe_allow_html=True)
     st.markdown(
-        "- **Exploded-aware KPIs**: always dedupe at `show_id` for exec view.  \n"
-        "- **Geo gaps**: check Tab 4 → prioritize low-volume countries with high strategic value.  \n"
-        "- **Genre gaps**: check Tab 5 → below-median categories = diversification picks.  \n"
-        "- **Talent**: Tab 6 → repeat names → consider multi-title campaigns.  \n"
-        "- **Dashboarding**: keep dark / Netflix-like UI for stakeholder demo."
+     
     )

@@ -38,7 +38,6 @@ def generate_boxplot(df,cat,val,outlier=True): # John
     import seaborn as sns
     import pandas as pd
     import numpy as np
-    import sklearn
     # computes median value per genre
     genre_medians = df.groupby(cat)[val].median().sort_values(ascending=False)
     
@@ -57,7 +56,7 @@ def generate_boxplot(df,cat,val,outlier=True): # John
     plt.title("Boxplot of "+val+" by "+cat+" (Sorted by Median)", fontsize=16)
     plt.xticks(rotation=45, fontsize=12)
     plt.yticks(fontsize=12)
-    # plt.savefig(val+" vs "+cat+" sorted.png")
+    plt.savefig(val+" vs "+cat+" sorted.png")
     plt.show()
 
 def generate_boxplot_interactive(df, cat, val, outlier=True):  # John
@@ -101,83 +100,219 @@ def generate_boxplot_interactive(df, cat, val, outlier=True):  # John
 
     fig.show()
 
-def Ftest(df,level,val,alpha=0.05): # John
+def tv_genre_rating_sentiment_scatter( #Daksh
+    df,
+    x_col="avg_rating",
+    y_col="avg_sent",
+    size_col="tv_show_count",
+    label_col="genres",
+    title="TV Genres on Netflix: Rating vs Sentiment (VADER)",
+    width=1000,
+    height=650,
+):
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+    import numpy as np
+    import plotly.express as px
+    fig = px.scatter(
+        df,
+        x=x_col,
+        y=y_col,
+        size=size_col,
+        color=y_col,
+        color_continuous_scale=["#E50914", "#B20710", "#FFFFFF"],
+        hover_data={
+            label_col: True,
+            x_col: ":.2f",
+            y_col: ":.3f",
+            size_col: True,
+        },
+        title=title,
+    )
 
-    # INPUTS
-    # df (pandas dataframe) -> dataframe that contains the data
-    # level (string) -> Name of column. Discrete data
-    # val (string) -> Name of column. Continuous data
-    # alpha (float) -> level of significance (0.05 by default)
+    fig.update_traces(
+        marker=dict(line=dict(width=1, color="white")),
+        selector=dict(mode="markers"),
+    )
 
-    # RETURNS
-    # the F-statistic, the critical value of F and the sum of squared errors which is needed by the LSD test
+    fig.update_layout(
+        width=width,
+        height=height,
+        template="plotly_dark",
+        title_font=dict(size=22, color="white"),
+        xaxis_title="Average Rating",
+        yaxis_title="Average Sentiment (compound)",
+        plot_bgcolor="#141414",
+        paper_bgcolor="#141414",
+        coloraxis_colorbar=dict(title="Avg Sentiment", tickfont=dict(color="white")),
+    )
+    return fig
+def tv_genre_popularity_sentiment_scatter(#Daksh
+    df,
+    x_col="avg_popularity",
+    y_col="avg_sent",
+    size_col="tv_show_count",
+    label_col="genres",
+    title="TV Show Genres on Netflix: Popularity vs Sentiment (VADER)",
+    width=1000,
+    height=650,
+):
+    """
+    Bubble scatter for TV genres: popularity vs sentiment.
+    df must contain [x_col, y_col, size_col, label_col].
+    """
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+    import numpy as np
+    import plotly.express as px
+    fig = px.scatter(
+        df,
+        x=x_col,
+        y=y_col,
+        size=size_col,
+        color=y_col,
+        color_continuous_scale=["#E50914", "#B20710", "#FFFFFF"],  # netflix-ish
+        hover_data={
+            label_col: True,
+            x_col: ":.2f",
+            y_col: ":.3f",
+            size_col: True,
+        },
+        title=title,
+    )
 
-    from scipy.stats import f
+    fig.update_traces(
+        marker=dict(line=dict(width=1, color="white")),
+        selector=dict(mode="markers"),
+    )
 
-    df=df[df[level]!='missing']
-    
-    a=df[level].nunique()
-    N=df.shape[0]
-    
-    y_dot_dot_bar=df[val].mean()
-    
-    genres=list(set(df[level]))
-    SST=0
-    SSE=0
-    for genre in genres:
-        data=df[df[level]==genre]
-        ni=data.shape[0]
-        yi_dot_bar=sum(data[val])/ni
-        SST+=ni*((yi_dot_bar-y_dot_dot_bar)**2)
-        sse=0
-        ratings=list(data[val])
-        for r in ratings:
-            sse+=(r-yi_dot_bar)**2
-        SSE+=sse
-    f_stat=(SST/(a-1))/(SSE/(N-a))
-    f_crit=f.ppf(1-alpha,a-1,N-a)
-    return f_stat,f_crit,SSE
+    fig.update_layout(
+        width=width,
+        height=height,
+        template="plotly_dark",
+        title_font=dict(size=22, color="white"),
+        xaxis_title="Average Popularity",
+        yaxis_title="Average Sentiment (compound)",
+        plot_bgcolor="#141414",
+        paper_bgcolor="#141414",
+        coloraxis_colorbar=dict(title="Avg Sentiment", tickfont=dict(color="white")),
+    )
+    return fig
+def genre_rating_sentiment_scatter( #Daksh
+    df,
+    x_col="avg_rating",
+    y_col="avg_sent",
+    size_col="movie_count",
+    label_col="genres",
+    title="Movie Genres on Netflix: Rating vs Sentiment (VADER)",
+    width=1000,
+    height=650,
+):
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+    import numpy as np
+    import plotly.express as px
+    fig = px.scatter(
+        df,
+        x=x_col,
+        y=y_col,
+        size=size_col,
+        color=y_col,
+        color_continuous_scale=["#E50914", "#B20710", "#FFFFFF"],  # netflix-ish
+        hover_data={
+            label_col: True,
+            x_col: ":.2f",
+            y_col: ":.3f",
+            size_col: True,
+        },
+        title=title,
+    )
 
-def LSD_test(df,level,val,SSE,alpha=0.05): # John
+    fig.update_traces(
+        marker=dict(line=dict(width=1, color="white")),
+        selector=dict(mode="markers"),
+    )
 
-    # INPUTS
-    # df (pandas dataframe) -> dataframe that contains the data
-    # level (string) -> name of the column (discrete data)
-    # val (string) -> name of the column (continuous data)
-    # SSE (float) -> Sum of Squared Errors from the F-test model
-    # alpha (float) -> level of significance (default 0.05)
+    fig.update_layout(
+        width=width,
+        height=height,
+        template="plotly_dark",
+        title_font=dict(size=22, color="white"),
+        xaxis_title="Average Rating",
+        yaxis_title="Average Sentiment (compound)",
+        plot_bgcolor="#141414",
+        paper_bgcolor="#141414",
+        coloraxis_colorbar=dict(title="Avg Sentiment", tickfont=dict(color="white")),
+    )
+    return fig
+def genre_popularity_sentiment_scatter(#Daksh
+    df,
+    x_col="avg_popularity",
+    y_col="avg_sent",
+    size_col="movie_count",
+    label_col="genres",
+    title="Movie Genres on Netflix: Popularity vs Sentiment (VADER)",
+    width=1000,
+    height=650,
+):
+    """
+    Build a bubble scatter of genre popularity vs sentiment.
 
-    # RETURNS
-    # dictionary that contains each level as its keys and lists as its values. These lists contain the names of the genres for which the key genre has a statisctically higher average value 
+    Parameters
+    ----------
+    df : DataFrame with columns [x_col, y_col, size_col, label_col]
+    x_col : str, column for x-axis (e.g., "avg_popularity")
+    y_col : str, column for y-axis (e.g., "avg_sent")
+    size_col : str, bubble size column (e.g., "movie_count")
+    label_col : str, label shown on hover (e.g., "genres")
+    title : str, chart title
+    width, height : int, figure size
 
-    a=df[level].nunique()
-    N=df.shape[0]
-    genres=list(set(df[level]))
-    df=df[df[level]!='missing']
-    from scipy.stats import t
-    from math import sqrt
-    t_val=t.ppf(1-alpha/2,N-a)
-    MSE=SSE/(N-a)
-    dic={}
-    for genre in genres:
-        dic[genre]=[]
-    for i in range(len(genres)):
-        for j in range(i+1,len(genres)):
-            g1=genres[i]
-            g2=genres[j]
-            if g1!=g2:
-                n1=df[df[level]==g1].shape[0]
-                n2=df[df[level]==g2].shape[0]
-                LSD=t_val*sqrt(MSE*(1/n1+1/n2))
-                y1_bar=sum(df[df[level]==g1][val])/n1
-                y2_bar=sum(df[df[level]==g2][val])/n2
-                if abs(y1_bar-y2_bar)>LSD:
-                    if y1_bar>y2_bar:
-                        dic[g1].append(g2)
-                    else:
-                        dic[g2].append(g1)
-    return dic
+    Returns
+    -------
+    plotly.graph_objects.Figure
+    """
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+    import numpy as np
+    import plotly.express as px
+    fig = px.scatter(
+        df,
+        x=x_col,
+        y=y_col,
+        size=size_col,
+        color=y_col,
+        color_continuous_scale=["#E50914", "#B20710", "#FFFFFF"],  # netflix-ish
+        hover_data={
+            label_col: True,
+            x_col: ":.2f",
+            y_col: ":.3f",
+            size_col: True,
+        },
+        title=title,
+    )
 
+    fig.update_traces(
+        marker=dict(line=dict(width=1, color="white")),
+        selector=dict(mode="markers"),
+    )
+
+    fig.update_layout(
+        width=width,
+        height=height,
+        template="plotly_dark",
+        title_font=dict(size=22, color="white"),
+        xaxis_title="Average Popularity",
+        yaxis_title="Average Sentiment (compound)",
+        plot_bgcolor="#141414",
+        paper_bgcolor="#141414",
+        coloraxis_colorbar=dict(title="Avg Sentiment", tickfont=dict(color="white")),
+    )
+    return fig
 def pie_by_count(   #Daksh
     df,
     column="type",
@@ -293,6 +428,93 @@ def barh_top_counts_series(   #Daksh
     if show:
         plt.show()
 
+def barh_top_counts_series_black_background(   #Daksh
+    s,
+    *,
+    title: str = "Top Categories (Count & Share)",
+    # figtitle,
+    xlabel: str = "Count",
+    color: str = "#E50914",
+    fontsize: int = 10,
+    x_margin: float = 0.12,
+    total: int | None = None,   # denominator for percentages; default = s.sum()
+    show: bool = True,
+    save_path: str | None = None,
+):
+    """
+    Draw a horizontal bar chart from a counts Series (index=labels, values=counts).
+    Inputs:-
+    1)s : pd.Series
+        Series of counts (index=labels, values=counts).
+    2)title : string
+    3)xlabel : string
+    4)color : string
+    5)figtitle : string
+        Figure title.
+        Bar color.
+    """
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import numpy as np
+    import seaborn as sns
+    if not isinstance(s, pd.Series):
+        raise TypeError("Expected a pandas Series of counts.")
+
+    # Use provided Series;
+    s_plot = s.sort_values(ascending=False)
+
+    denom = total if total is not None else int(s_plot.sum())
+
+    # Reverse for largest at top in barh
+    labels = s_plot.index[::-1].astype(str)
+    values = s_plot.values[::-1]
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    ax.barh(labels, values, color=color)
+    ax.margins(x=x_margin)
+
+    #set background to black
+    ax.set_facecolor("#000000")  
+    fig.patch.set_facecolor("#000000")
+
+    # Annotate: "count (pct)"
+    for i, v in enumerate(values):
+        pct = (v / denom) if denom else 0.0
+        ax.text(v, i, f" {v} ({pct:.1%})", va="center", color="white", fontsize=fontsize)
+    ax.tick_params(colors="white")
+    for spine in ax.spines.values():
+        spine.set_color("white")
+    ax.set_title(title,color="white") 
+    ax.set_xlabel(xlabel,color="white")
+    # plt.figtext(0.5, 0, figtitle, 
+    #         wrap=True, horizontalalignment='center', fontsize=12)
+    plt.tight_layout()
+
+    if show:
+        plt.show()
+def plot_sentiment_by_genre(sent_pivot,title): #Daksh
+    """
+    Plot stacked sentiment distribution across genres (Netflix style).
+    sent_pivot: index=genre, columns=['positive','neutral','negative'], values=%
+    """
+    import matplotlib.pyplot as plt
+    sent_pivot = sent_pivot[["positive", "neutral", "negative"]]
+
+    ax = sent_pivot.plot(
+        kind="bar",
+        stacked=True,
+        figsize=(12, 6),
+        color=["#E50914", "#221F1F", "#B3B3B3"],  # netflix-ish
+        edgecolor="white",
+    )
+
+    plt.ylabel("% of titles")
+    plt.title(title, fontsize=14, weight="bold")
+    plt.xticks(rotation=45, ha="right")
+    plt.legend(title="Sentiment", bbox_to_anchor=(1.0, 1.0))
+    plt.tight_layout()
+    plt.show()
+    
 def genre_wordcloud(df, col='genres', title='Genre Popularity Word Cloud'): # John
     """
     Generate and display a word cloud of popular genres (or any categorical feature).
@@ -401,69 +623,6 @@ def generate_treemap(df, cat, val): # John
 
     fig.show()
 
-
-# def generate_interactive_scatter(df, x, y, color=None, hover=None):
-#     """
-#     Creates an interactive Netflix-themed scatter plot using Plotly.
-
-#     Parameters
-#     ----------
-#     df : pandas.DataFrame
-#         The dataframe containing the data.
-#     x : str
-#         The name of the column for the x-axis (e.g. 'budget').
-#     y : str
-#         The name of the column for the y-axis (e.g. 'revenue').
-#     color : str, optional
-#         The name of the categorical column to color the points by (e.g. 'genres').
-#     hover : str or list, optional
-#         Column(s) to display when hovering (e.g. 'title' or ['title', 'rating']).
-
-#     Returns
-#     -------
-#     Displays an interactive scatter plot.
-#     """
-#     import pandas as pd
-#     import plotly.express as px
-
-#     # Drop rows with missing required values
-#     cols = [x, y]
-#     if color:
-#         cols.append(color)
-#     if hover:
-#         if isinstance(hover, list):
-#             cols.extend(hover)
-#         else:
-#             cols.append(hover)
-#     df_clean = df.dropna(subset=cols)
-
-#     # Create interactive scatter plot
-#     fig = px.scatter(
-#         df_clean,
-#         x=x,
-#         y=y,
-#         color=color,
-#         hover_data=hover,
-#         title=f"{y} vs {x}" + (f" colored by {color}" if color else ""),
-#         color_discrete_sequence=['#E50914', '#B81D24', '#831010', '#221f1f'],  # Netflix reds
-#     )
-
-#     # Style for Netflix dark theme
-#     fig.update_layout(
-#         template='plotly_dark',
-#         paper_bgcolor='#141414',
-#         plot_bgcolor='#141414',
-#         font=dict(color='white'),
-#         title_font=dict(size=22),
-#         xaxis_title=x.title(),
-#         yaxis_title=y.title(),
-#         legend_title=color.title() if color else '',
-#     )
-
-#     # Smooth marker style
-#     fig.update_traces(marker=dict(size=10, opacity=0.8, line=dict(width=1, color='white')))
-
-#     fig.show()
 
 def generate_interactive_scatter(df, x, y, color=None, hover=None): # John
     """
@@ -1315,7 +1474,7 @@ def generate_line_chart( #Daksh
     3)xlabel : string
         Label for the x-axis.
     4)ylabel : string
-        Label for the y-axis.
+        Label for the y-axis. 
     """
     import matplotlib.pyplot as plt
     import pandas as pd
@@ -1334,240 +1493,57 @@ def generate_line_chart( #Daksh
             wrap=True, horizontalalignment='center', fontsize=12)
     fig.tight_layout()
     plt.show()
-def chi_square_test(df, col1, col2):#Taniya
+
+def plot_treemap_from_series(
+    s,
+    *,
+    # title="Top 15 Genres / Categories",
+    caption="Figure 1: Genre Treemap (Netflix-style)",
+    figsize=(10, 6),
+):
     """
-    Performs a Chi-Square Test of Independence between two categorical variables.
-
-
-    INPUTS:
-        df (pandas.DataFrame) -> Dataset containing both categorical columns.
-        col1 (str) -> First categorical variable (e.g., 'director').
-        col2 (str) -> Second categorical variable (e.g., 'rating').
-
-
-    RETURNS:
-        chi2 (float) -> Chi-square statistic
-        p (float) -> p-value
-        dof (int) -> Degrees of freedom
-        contingency (pd.DataFrame) -> Contingency table used in the test
-
-
-    PURPOSE:
-        To determine whether there is a statistically significant relationship 
-        between two categorical variables. Highly modular — usable for 
-        director-rating, actor-category, country-type, etc.
+    Plot a treemap from a pandas Series of counts.
+    s.index -> labels
+    s.values -> sizes
     """
-    import pandas as pd
-    from scipy.stats import chi2_contingency
-
-
-    # Drop missing or unknown entries for the two columns
-    data = df.dropna(subset=[col1, col2])
-    if data[col1].dtype == 'object':
-        data = data[data[col1].str.lower() != 'unknown']
-    if data[col2].dtype == 'object':
-        data = data[data[col2].str.lower() != 'unknown']
-
-
-    # Build contingency table
-    contingency = pd.crosstab(data[col1], data[col2])
-
-
-    # Perform Chi-square test
-    chi2, p, dof, expected = chi2_contingency(contingency)
-
-
-    return chi2, p, dof, contingency
-def plot_chi_square_heatmap(contingency, var1_name="Variable 1", var2_name="Variable 2", top_n=10):  # Taniya
-    """
-    Plots a heatmap for the top N categories from a Chi-Square contingency table.
-
-
-    INPUTS:
-        contingency (pd.DataFrame) -> Contingency table (output from chi_square_test)
-        var1_name (str) -> Label for the first variable
-        var2_name (str) -> Label for the second variable
-        top_n (int) -> Number of top categories (rows) to visualize
-
-
-    RETURNS:
-        None (displays heatmap)
-    """
-    import seaborn as sns
     import matplotlib.pyplot as plt
-    import matplotlib as mpl
+    import squarify
+    # netflix-ish palette (light → dark)
+    colors = ["#E50914", "#B20710", "#831010", "#6B0F0F", "#4A0C0C"] * 5
 
+    labels = [f"{lbl}\n{s[lbl]}" for lbl in s.index]
+    sizes = s.values
 
-    # Take top N categories by row totals for clarity
-    top_rows = contingency.sum(axis=1).sort_values(ascending=False).head(top_n).index
-    subset = contingency.loc[top_rows]
+    fig, ax = plt.subplots(figsize=figsize)
+    # black background for Netflix vibe
+    ax.set_facecolor("#141414")
+    fig.patch.set_facecolor("#141414")
 
+    squarify.plot(
+        sizes=sizes,
+        label=labels,
+        color=colors[:len(sizes)],
+        alpha=1.0,
+        text_kwargs={"color": "white", "fontsize": 10}
+    )
+    # ax.set_title(title, color="white", fontsize=14, pad=12)
+    ax.axis("off")
 
-    # Create Netflix-style red gradient colormap
-    netflix_cmap = mpl.colors.LinearSegmentedColormap.from_list(
-        "netflix_red",
-        ["#221F1F", "#8B0000", "#E50914"]
+    # make room at bottom for caption
+    plt.tight_layout(rect=[0, 0.05, 1, 1])
+
+    # caption at bottom, centered
+    fig.text(
+        0.5, 0.01,
+        caption,
+        ha="center",
+        va="bottom",
+        color="white",
+        fontsize=9,
     )
 
-
-    plt.figure(figsize=(10, 6))
-    sns.heatmap(
-        subset,
-        cmap=netflix_cmap,
-        annot=True,
-        fmt='d',
-        linewidths=0.5,
-        cbar_kws={"label": "Frequency"},
-        annot_kws={"color": "white", "fontsize": 10}
-    )
-
-
-    # Netflix-inspired styling
-    plt.title(f"{var1_name} vs {var2_name} Distribution (Top {top_n})",
-              fontsize=15, color="#E50914", fontweight="bold", pad=15)
-    plt.xlabel(var2_name, fontsize=12, color="white")
-    plt.ylabel(var1_name, fontsize=12, color="white")
-
-
-    plt.gca().set_facecolor("#141414")
-    plt.gcf().patch.set_facecolor("#141414")
-    plt.xticks(color="white", rotation=45, ha="right")
-    plt.yticks(color="white")
-
-
-    plt.tight_layout()
     plt.show()
 
-
-def anova_test(df, group_col, value_col):#Taniya
-    # """
-    # Performs a one-way ANOVA test to determine whether the mean of a continuous 
-    # variable differs significantly across groups.
-
-
-    # INPUTS:
-    #     df (pandas.DataFrame) -> Dataset containing categorical and continuous columns
-    #     group_col (str) -> Column name for the categorical variable (e.g., 'director')
-    #     value_col (str) -> Column name for the continuous variable (e.g., 'duration')
-
-
-    # RETURNS:
-    #     F-statistic (float), p-value (float)
-
-
-    # PURPOSE:
-    #     Tests whether the average of a numeric column (e.g., duration) 
-    #     differs significantly across categories (e.g., directors).
-    # """
-    import pandas as pd
-    from scipy.stats import f_oneway
-
-
-    # Drop missing values
-    data = df.dropna(subset=[group_col, value_col])
-
-
-    # Convert duration to numeric if it’s a string (e.g., '90 min', '2 Seasons')
-    if data[value_col].dtype == 'object':
-        data[value_col] = (
-            data[value_col]
-            .astype(str)
-            .str.extract(r'(\d+)')  # extract the numeric part
-            .astype(float)
-        )
-
-
-    # Prepare samples grouped by the categorical variable
-    groups = [
-        group[value_col].dropna().values
-        for _, group in data.groupby(group_col)
-        if len(group[value_col].dropna()) > 1
-    ]
-
-
-    # Perform one-way ANOVA
-    if len(groups) > 1:
-        F_stat, p_val = f_oneway(*groups)
-        return F_stat, p_val
-    else:
-        print("Not enough groups for ANOVA.")
-        return None, None
-
-
-
-
-
-def compute_network_centrality(G):#Taniya
-    # """
-    # Computes key centrality measures for a NetworkX graph.
-
-
-    # INPUTS:
-    #     G (networkx.Graph) -> Collaboration network (e.g., Director–Actor)
-
-
-    # RETURNS:
-    #     pd.DataFrame -> DataFrame containing:
-    #                     [node, degree_centrality, betweenness_centrality, 
-    #                      closeness_centrality, eigenvector_centrality]
-
-
-    # PURPOSE:
-    #     Quantifies the most connected and influential creators in the network.
-    # """
-    import networkx as nx
-    import pandas as pd
-
-
-    # Compute all major centrality measures
-    degree_centrality = nx.degree_centrality(G)
-    betweenness_centrality = nx.betweenness_centrality(G, normalized=True)
-    closeness_centrality = nx.closeness_centrality(G)
-    try:
-        eigenvector_centrality = nx.eigenvector_centrality(G, max_iter=500)
-    except nx.PowerIterationFailedConvergence:
-        eigenvector_centrality = {n: 0 for n in G.nodes()}
-
-
-    # Combine results
-    centrality_df = pd.DataFrame({
-        'node': list(G.nodes()),
-        'degree_centrality': [degree_centrality[n] for n in G.nodes()],
-        'betweenness_centrality': [betweenness_centrality[n] for n in G.nodes()],
-        'closeness_centrality': [closeness_centrality[n] for n in G.nodes()],
-        'eigenvector_centrality': [eigenvector_centrality[n] for n in G.nodes()],
-    })
-
-
-    return centrality_df.sort_values(by='degree_centrality', ascending=False)
-def plot_top_central_nodes(centrality_df, metric='degree_centrality', top_n=10):#Taniya
-    # """
-    # Plots the top N most central nodes by a chosen centrality metric.
-    # """
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-
-
-    top_nodes = centrality_df.sort_values(by=metric, ascending=False).head(top_n)
-
-
-    plt.figure(figsize=(10, 6))
-    sns.barplot(data=top_nodes, x=metric, y='node', color='skyblue')
-    plt.title(f"Top {top_n} Nodes by {metric.replace('_', ' ').title()}")
-    plt.xlabel(metric.replace('_', ' ').title())
-    plt.ylabel("Node (Creator)")
-    plt.tight_layout()
-    plt.show()
-
-
-def dataset_vanity_checks(df):#Taniya-may remove depending on whether the cleaning needs vanity checks
-    print("Total rows:", len(df))
-    print("Missing directors:", (df['director'] == 'Unknown').sum())
-    print("Missing cast:", (df['cast'] == 'Unknown').sum())
-    print("Unique directors:", df['director'].nunique())
-    print("Unique actors:", df['cast'].nunique())
-    print("Unique genres:", df['listed_in'].nunique())
-    print("Year range:", df['release_year'].min(), "-", df['release_year'].max())
 def get_top_creators(df, column, n=20):#Taniya
     
     # INPUTS:
@@ -1642,109 +1618,6 @@ def plot_top_creators(series, title):  # Taniya
     plt.yticks(color="white", fontsize=10)
 
 
-    plt.tight_layout()
-    plt.show()
-
-def build_collaboration_network(df):#Taniya
-    # """
-    # INPUTS:
-    #     df (pandas.DataFrame) -> Dataset containing 'director' and 'cast' columns.
-
-
-    # RETURNS:
-    #     networkx.Graph -> Undirected bipartite graph of directors and actors.
-
-
-    # PURPOSE:
-    #     Constructs a collaboration network showing which directors have worked
-    #     with which actors, excluding 'Unknown' entries.
-    # """
-    import networkx as nx
-    import pandas as pd
-
-
-    valid_df = df[(df['director'] != 'Unknown') & (df['cast'] != 'Unknown')]
-    G = nx.from_pandas_edgelist(valid_df, source='director', target='cast')
-    return G
-
-
-def plot_network(G, max_nodes=150):  # Taniya
-    # """
-    # INPUTS:
-    #     G (networkx.Graph) -> Collaboration network from build_collaboration_network().
-    #     max_nodes (int)    -> Maximum nodes to show (default = 150).
-
-
-    # RETURNS:
-    #     None (displays Netflix-themed collaboration visualization with visible edges).
-
-
-    # PURPOSE:
-    #     Visualizes the director–actor network with Netflix-inspired aesthetics:
-    #     - Bright red edges for visibility
-    #     - Red directors, grey-white actors
-    #     - Black cinematic background
-    #     - Node sizes scaled by degree
-    #     - Top collaborators labeled in bright red
-    # """
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-
-    # Limit graph size for readability
-    if len(G.nodes) > max_nodes:
-        G = G.subgraph(list(G.nodes)[:max_nodes])
-
-
-    plt.figure(figsize=(14, 10))
-    plt.style.use("dark_background")
-
-
-    # Identify directors and actors
-    directors = [n for n in G.nodes if ' ' in n and len(n.split()) <= 3]
-    actors = list(set(G.nodes) - set(directors))
-
-
-    # Netflix color palette
-    director_color = "#E50914"  # Netflix red
-    actor_color = "#B3B3B3"     # Muted white-grey
-    edge_color = "#E50914"      # Bright red edges
-
-
-    # Colors and node sizes
-    degrees = dict(G.degree)
-    node_colors = [director_color if n in directors else actor_color for n in G.nodes]
-    node_sizes = [120 + 4 * degrees[n] for n in G.nodes]
-
-
-    # Layout
-    pos = nx.spring_layout(G, k=0.3, iterations=40, seed=42)
-
-
-    # Draw edges — brighter and more visible now
-    nx.draw_networkx_edges(G, pos, edge_color=edge_color, alpha=0.6, width=1.3)
-
-
-    # Draw nodes
-    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=node_sizes, alpha=0.9, linewidths=0.5)
-
-
-    # Label top 10 most connected nodes
-    top_nodes = sorted(G.degree, key=lambda x: x[1], reverse=True)[:10]
-    label_nodes = [n for n, _ in top_nodes if n in pos]
-    labels = {n: n for n in label_nodes}
-
-
-    nx.draw_networkx_labels(G, pos, labels=labels, font_size=8, font_color="#FF4C4C", font_weight="bold")
-
-
-    # Style the plot
-    plt.title("🎬 Director–Actor Collaboration Network",
-              fontsize=15, color="#E50914", fontweight="bold", pad=15)
-    plt.gca().set_facecolor("#000000")  # pure black
-    plt.gcf().patch.set_facecolor("#000000")
-    plt.axis("off")
     plt.tight_layout()
     plt.show()
 
@@ -1927,88 +1800,6 @@ def plot_creator_country_distribution(df, creator_col='director'):  # Taniya
 
     plt.tight_layout()
     plt.show()
-
-
-def director_rating_significance(df, val_col='vote_average'):  # Taniya
-    import pandas as pd
-    import numpy as np
-    from itertools import combinations
-    from scipy.stats import f, t
-
-
-    # Drop missing values for safety
-    df = df.dropna(subset=['director', val_col])
-
-
-    # Group by director and compute mean and count
-    groups = df.groupby('director')[val_col].apply(list)
-    k = len(groups)  # Number of directors
-    n_total = len(df)  # Total observations
-    overall_mean = df[val_col].mean()
-
-
-    # ---- F-test (One-way ANOVA) ----
-    # Between-group sum of squares (SSB)
-    ssb = sum([len(vals) * (np.mean(vals) - overall_mean) ** 2 for vals in groups])
-
-
-    # Within-group sum of squares (SSW)
-    ssw = sum([sum((np.array(vals) - np.mean(vals)) ** 2) for vals in groups])
-
-
-    dfb = k - 1
-    dfw = n_total - k
-    msb = ssb / dfb
-    msw = ssw / dfw
-    f_stat = msb / msw
-    f_crit = f.ppf(0.95, dfb, dfw)  # α = 0.05
-
-
-    print(f"F-statistic = {f_stat:.3f}, F-critical = {f_crit:.3f}")
-    if f_stat <= f_crit:
-        print("Fail to reject H₀ → No significant difference between directors.")
-        return None
-
-
-    print("Reject H₀ → Significant difference detected. Proceeding with LSD test...")
-
-
-    # ---- LSD (Least Significant Difference) ----
-    result = {}
-    means = groups.apply(np.mean)
-    sizes = groups.apply(len)
-    se = np.sqrt(msw * (1/sizes.values[:, None] + 1/sizes.values))
-
-
-    # t-critical value (two-tailed, α=0.05)
-    t_crit = t.ppf(1 - 0.05/2, dfw)
-    lsd_results = []
-
-
-    for (d1, d2) in combinations(groups.index, 2):
-        diff = abs(means[d1] - means[d2])
-        se_pair = np.sqrt(msw * (1/sizes[d1] + 1/sizes[d2]))
-        lsd = t_crit * se_pair
-        significant = diff > lsd
-        result[(d1, d2)] = {
-            'Mean_Diff': diff,
-            'LSD': lsd,
-            'Significant': significant
-        }
-        lsd_results.append((d1, d2, diff, lsd, significant))
-
-
-    # Print summary of significant differences
-    sig_pairs = [pair for pair, vals in result.items() if vals['Significant']]
-    if sig_pairs:
-        print("\nSignificant director pairs (mean difference > LSD):")
-        for pair in sig_pairs:
-            print(f"  {pair[0]} vs {pair[1]} → Δ={result[pair]['Mean_Diff']:.3f}")
-    else:
-        print("\nNo significant pairwise differences found in LSD test.")
-
-
-    return result
 
 def plot_international_vs_domestic(df, creator_col='director', home_country='India'):  # Taniya
     """
@@ -2214,130 +2005,6 @@ def plot_creator_timeline(df, creator_col='director', top_n=5):  # Taniya
     )
 
 
-    plt.tight_layout()
-    plt.show()
-
-
-def compute_entropy(df, entity_col, category_col):#Taniya
-    # """
-    # Computes Shannon Entropy for any categorical pair (e.g., Director–Genre, Actor–Genre, Country–Category).
-
-
-    # INPUTS:
-    #     df (pandas.DataFrame) -> dataset containing both categorical columns
-    #     entity_col (str) -> column name representing the entity (e.g., 'director', 'actor', 'country')
-    #     category_col (str) -> column name representing the category (e.g., 'listed_in', 'genre', 'category')
-
-
-    # RETURNS:
-    #     pd.DataFrame -> DataFrame with columns:
-    #                     [entity_col, 'entropy', 'num_records']
-
-
-    # PURPOSE:
-    #     Quantifies specialization or diversity for each entity.
-    #     - Low entropy → specialized in fewer categories
-    #     - High entropy → diversified across many categories
-    # """
-    import pandas as pd
-    import numpy as np
-
-
-    # Drop missing or unknown values
-    data = df.dropna(subset=[entity_col, category_col])
-    if data[entity_col].dtype == 'object':
-        data = data[data[entity_col].str.lower() != 'unknown']
-    if data[category_col].dtype == 'object':
-        data = data[data[category_col].str.lower() != 'unknown']
-
-
-    # Split comma-separated category entries if present
-    #data = data.assign(*{category_col: data[category_col].astype(str).str.split(',\s')})
-    data = data.explode(category_col)
-
-
-    # Compute counts
-    combo_counts = data.groupby([entity_col, category_col]).size().reset_index(name='count')
-    total_counts = combo_counts.groupby(entity_col)['count'].sum().reset_index(name='total')
-
-
-    # Merge to calculate probabilities
-    merged = combo_counts.merge(total_counts, on=entity_col)
-    merged['p'] = merged['count'] / merged['total']
-
-
-    # Compute entropy
-    entropy_df = (
-        merged.groupby(entity_col)
-        .apply(lambda x: -np.sum(x['p'] * np.log2(x['p'])))
-        .reset_index(name='entropy')
-    )
-
-
-    # Add total number of records (for filtering)
-    num_records = data.groupby(entity_col).size().reset_index(name='num_records')
-    entropy_df = entropy_df.merge(num_records, on=entity_col, how='left')
-
-
-    return entropy_df.sort_values(by='entropy', ascending=False)
-
-
-def plot_entropy(entropy_df, entity_col, top_n=10):  # Taniya
-    
-    # Plots top and bottom N entities based on entropy (diversity) 
-    # in a Netflix-themed color scheme.
-
-
-    # INPUTS:
-    #     entropy_df (pd.DataFrame) -> DataFrame returned from compute_entropy()
-    #     entity_col (str) -> entity column name (e.g., 'director', 'actor')
-    #     top_n (int) -> number of top and bottom entities to visualize
-
-
-    # RETURNS:
-    #     None (displays two Netflix-themed bar charts)
-   
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-    import matplotlib as mpl
-
-
-    # Prepare data
-    top_diverse = entropy_df.head(top_n)
-    top_specialized = entropy_df.tail(top_n)
-
-
-    # Netflix gradients
-    red_gradient = mpl.colors.LinearSegmentedColormap.from_list(
-        "netflix_red", ["#8B0000", "#E50914"]
-    )
-    dark_gradient = mpl.colors.LinearSegmentedColormap.from_list(
-        "netflix_darkred", ["#333333", "#8B0000"]
-    )
-
-
-    # --- Plot 1: Top Diverse Entities (High Entropy) ---
-    plt.figure(figsize=(10, 6))
-    plt.style.use("dark_background")
-    sns.barplot(
-        data=top_diverse,
-        x='entropy',
-        y=entity_col,
-        palette=[red_gradient(i / top_n) for i in range(top_n)]
-    )
-    plt.title(f"🔥 Top {top_n} Most Diverse {entity_col.title()}s (High Entropy)",
-              fontsize=15, color="#E50914", fontweight="bold", pad=15)
-    plt.xlabel("Entropy (Diversity)", fontsize=12, color="white")
-    plt.ylabel(entity_col.title(), fontsize=12, color="white")
-
-
-    # Style adjustments
-    plt.gca().set_facecolor("#000000")
-    plt.gcf().patch.set_facecolor("#000000")
-    plt.xticks(color="white")
-    plt.yticks(color="white")
-    for spine in plt.gca().spines.values():
-        spine.set_visible(False)
     plt.tight_layout()
     plt.show()
 
@@ -2944,3 +2611,504 @@ def plot_movie_coproduction_heatmap(df, top_n): # Aditya
     plt.yticks(rotation=0)
     plt.tight_layout()
     plt.show()
+
+def plot_wordcloud(df,col,save=False): # John
+    # plots the word cloud of the discrete data column "col"
+    # df : dataframe
+    # col : column for which you want the wordcloud to be plotted (discrete)
+    # save : set as true if you want the figure to be saved in your current working directory
+    from wordcloud import WordCloud
+    import matplotlib.pyplot as plt
+
+    # Combine all genres into a single string
+    text = ' '.join([genre for sublist in df[col] 
+                    for genre in ([sublist] if isinstance(sublist, str) else sublist)])
+
+    # Define a custom color function (Netflix red)
+    def netflix_red_color_func(*args, **kwargs):
+        return "#E50914"
+
+    # Create the WordCloud
+    wordcloud = WordCloud(
+        width=800,
+        height=400,
+        background_color='white',  # Black background makes red pop
+        color_func=netflix_red_color_func
+    ).generate(text)
+
+    # Plot the WordCloud
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    plt.title('', fontsize=16, color='#E50914')
+    if save:
+        plt.savefig(col+'_wordcloud.png')
+    plt.show()
+
+def plot_categorywise_corr(df,col1,col2,cat,save=False,sorted=False): # John
+    # plots the correlation coeff between col1 and col2 for each cat
+    # df : dataframe
+    # col1 : column 1 (continuous)
+    # col2 : column 2 (continuous)
+    # cat : category column (discrete)
+    # save : set as true if you want to save the fig
+    # sorted : set as true if you want the plot to be sorted in ascending order
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+    genre_corr = (
+        df
+        .groupby(cat)
+        .apply(lambda x: x[col1].corr(x[col2]))
+        .sort_values(ascending=sorted)
+    )
+    plt.figure(figsize=(12, 6))
+    genre_corr.plot(kind='bar', color='red', edgecolor='black')
+
+    plt.title("Correlation between "+col1+" and "+col2+" per "+cat, fontsize=16)
+    plt.xlabel(cat, fontsize=14)
+    plt.ylabel("Pearson Correlation", fontsize=14)
+    plt.xticks(rotation=45, ha='right', fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.tight_layout()
+    if save:
+        plt.savefig('correlation between '+col1+' and '+col2+' per '+cat+'.png')
+    plt.show()
+
+def plot_change_over_time(df,var,time,cat): # John
+    # plots the change over time of var per cat
+    # df : dataframe
+    # var : continous data column
+    # time : column name that contains data related to time
+    # cat : category column 
+
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+    popularity_trend = (
+        df
+        .groupby([cat, time])[var]
+        .mean()
+        .reset_index()
+    )
+
+    fig = px.line(
+        popularity_trend,
+        x=time,
+        y=var,
+        color=cat,
+        markers=True, 
+        title="Change in "+var+" Over Time by "+cat,
+        color_discrete_sequence=px.colors.qualitative.Light24 
+    )
+
+    fig.update_layout(
+        width=1100,
+        height=650,
+        template='plotly_dark',
+        title_font=dict(size=22, color='white'),
+        xaxis_title=time,
+        yaxis_title='Average '+var,
+        legend_title=cat,
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+        legend=dict(
+            title=cat,
+            orientation='v',
+            yanchor='top',
+            y=1,
+            xanchor='left',
+            x=1.02
+        )
+    )
+
+    fig.update_xaxes(
+        tickmode='linear',
+        tick0=popularity_trend[time].min(),
+        dtick=1
+    )
+
+    fig.show()
+
+def plot_number_across_time(df,cat,time): # John 
+    # plots the number of occurances of a particular categrory (cat) for every category across time
+    # df : dataframe
+    # cat : category column name
+    # time : column that contains data related to time
+
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+    movie_counts = (
+        df.groupby([time, cat])
+        .size()
+        .reset_index(name='num_movies')
+    )
+
+    fig = px.line(
+        movie_counts,
+        x=time,
+        y='num_movies',
+        color=cat, 
+        title='Number of Movies Released per Year by '+cat,
+        color_discrete_sequence=px.colors.qualitative.Set3 
+    )
+
+    fig.update_layout(
+        width=1000,
+        height=600,
+        template='plotly_dark',
+        title_font=dict(size=22, color='white'),
+        xaxis_title=time,
+        yaxis_title='Number of Movies',
+        legend_title=cat,
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+    )
+
+    fig.show()
+
+def cumulative_number_plot(df,time,cat): # John
+    # plots the cumulative number of occurances of a particular category over time for every catgeory
+    # df : dataframe
+    # time : column that contains data related to time
+    # cat : column name of the categorical data
+
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+    movie_counts = (
+        df.groupby([time, cat])
+        .size()
+        .reset_index(name='num_movies')
+    )
+
+    movie_counts['cumulative_movies'] = (
+        movie_counts
+        .groupby(cat)['num_movies']
+        .cumsum()  
+    )
+
+    fig = px.line(
+        movie_counts,
+        x=time,
+        y='cumulative_movies',
+        color=cat,
+        markers=True,
+        title='Cumulative Number of Movies Released Over Time by '+cat,
+        color_discrete_sequence=px.colors.qualitative.Light24  
+    )
+
+    fig.update_layout(
+        width=1100,
+        height=650,
+        template='plotly_dark',
+        title_font=dict(size=22, color='white'),
+        xaxis_title=time,
+        yaxis_title='Cumulative Number of Movies (till that year)',
+        legend_title=cat,
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+        legend=dict(
+            orientation='v',
+            yanchor='top',
+            y=1,
+            xanchor='left',
+            x=1.02
+        )
+    )
+
+    fig.update_xaxes(
+        tickmode='linear',
+        tick0=movie_counts[time].min(),
+        dtick=1
+    )
+
+    fig.show()
+
+def sunburst_plot(df,cat1,cat2): # John 
+    # plots a sunburst plot which shows hierarchial relationships between two categorical variables
+    # cat1 : the categorical variable that has upper hierarchy in the sunburst plot
+    # cat2 : the categorical variable that has lower hierarchy in the sunburst plot
+
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+
+    # If the column contains lists, explode it
+    if df[cat1].apply(lambda x: isinstance(x, list)).any():
+        df = df.explode(cat1).reset_index(drop=True)
+
+    if df[cat2].apply(lambda x: isinstance(x, list)).any():
+        df = df.explode(cat2).reset_index(drop=True)
+
+    genre_lang_counts = (
+        df.groupby([cat1, cat2])
+        .size()
+        .reset_index(name='num_movies')
+    )
+
+    fig = px.sunburst(
+        genre_lang_counts,
+        path=[cat1, cat2], 
+        values='num_movies',
+        color=cat1,
+        color_discrete_sequence=[
+            '#E50914', '#B20710', '#F40612', '#FF0A16', '#A60311',
+            '#CC0E14', '#99000D', '#FF1E22', '#B81D24', '#E50914'
+        ],
+        title='Movies by '+cat1+' and '+cat2
+    )
+
+    fig.update_layout(
+        width=1000,
+        height=1000,
+        template='plotly_dark',
+        title_font=dict(size=24, color='white', family='Arial Black'),
+        font=dict(color='white'),
+        paper_bgcolor='#141414', 
+        plot_bgcolor='#141414',
+        margin=dict(t=80, l=0, r=0, b=0)
+    )
+
+    fig.update_traces(
+        hoverlabel=dict(bgcolor='white', font_color='black'),
+        textfont=dict(color='white', size=12),
+        insidetextorientation='radial'
+    )
+
+    fig.show()
+
+def plot_top20(dic,cat,var): # John
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+    df_genres = pd.DataFrame(list(dic.items()), columns=[cat+' Combination', 'Average_'+var])
+
+    df_top20 = df_genres.sort_values(by='Average_'+var, ascending=False).head(20)
+
+    fig = px.bar(
+        df_top20,
+        x=cat+' Combination',
+        y='Average_'+var,
+        text='Average_'+var,
+        title='Top 20 '+cat+' by Average '+var,
+    )
+
+    fig.update_traces(
+        marker_color='#E50914',    
+        texttemplate='%{text:.2f}',
+        textposition='outside'
+    )
+
+    fig.update_layout(
+        width=1000,
+        height=600,
+        template='plotly_dark',
+        title_font=dict(size=24, color='white', family='Arial Black'),
+        xaxis_title=cat+' Combination',
+        yaxis_title='Average '+var,
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+        xaxis=dict(tickangle=45, tickfont=dict(size=12, color='white')),
+        yaxis=dict(tickfont=dict(color='white')),
+    )
+
+    fig.show()
+
+def plot_lossmakers(df,rev,bud,cat):
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+
+    loss_df = df[df[rev] < df[bud]]
+
+    loss_counts = (
+        loss_df.groupby(cat)
+        .size()
+        .reset_index(name='num_loss_movies')
+        .sort_values(by='num_loss_movies', ascending=True)
+    )
+
+    fig = px.bar(
+        loss_counts,
+        x=cat,
+        y='num_loss_movies',
+        text='num_loss_movies',
+        title='Number of Movies per Genre with Revenue Less than Budget',
+    )
+
+    fig.update_traces(
+        marker_color='#E50914',       
+        texttemplate='%{text}', 
+        textposition='outside'
+    )
+
+    fig.update_layout(
+        width=1000,
+        height=600,
+        template='plotly_dark',
+        title_font=dict(size=22, color='white', family='Arial Black'),
+        xaxis_title=cat,
+        yaxis_title='Number of Movies (Revenue < Budget)',
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+        xaxis=dict(
+            tickangle=45,
+            categoryorder='total ascending', 
+            tickfont=dict(color='white')
+        ),
+        yaxis=dict(tickfont=dict(color='white')),
+    )
+
+    fig.show()
+
+def fraction_lossmaking(df,cat,rev,bud):
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+
+    total_counts = df.groupby(cat).size().reset_index(name='total_movies')
+
+    loss_counts = (
+        df[df[rev] < df[bud]]
+        .groupby(cat)
+        .size()
+        .reset_index(name='loss_movies')
+    )
+
+    genre_stats = pd.merge(total_counts, loss_counts, on=cat, how='left').fillna(0)
+    genre_stats['loss_fraction'] = genre_stats['loss_movies'] / genre_stats['total_movies']
+
+    genre_stats = genre_stats.sort_values(by='loss_fraction', ascending=True)
+
+    fig = px.bar(
+        genre_stats,
+        x=cat,
+        y='loss_fraction',
+        text=genre_stats['loss_fraction'].apply(lambda x: f"{x:.2%}"),
+        title='Fraction of Movies per Genre that Made a Loss',
+    )
+
+    fig.update_traces(
+        marker_color='#E50914',
+        textposition='outside'
+    )
+
+    fig.update_layout(
+        width=1000,
+        height=600,
+        template='plotly_dark',
+        title_font=dict(size=22, color='white', family='Arial Black'),
+        xaxis_title='Genre',
+        yaxis_title='Fraction of Movies (Revenue < Budget)',
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+        xaxis=dict(
+            tickangle=45,
+            categoryorder='total ascending',
+            tickfont=dict(color='white')
+        ),
+        yaxis=dict(
+            tickformat='.0%',
+            tickfont=dict(color='white')
+        )
+    )
+
+    fig.show()
+
+def gap_analysis(df,cat,var,movies=True):
+    import pandas as pd
+    import plotly.express as px
+
+    # Copy and compute director stats
+    df=df[df[cat]!='missing']
+
+    directors_stats = (
+        df.groupby(cat)
+        .agg(
+            avg_var=(var, 'mean'),
+            movie_count=('title', 'nunique')
+        )
+        .reset_index()
+    )
+
+    # Filter directors with at least 5 movies
+    directors_stats = directors_stats[directors_stats['movie_count'] >= 5]
+
+    # Create interactive scatter plot
+    if movies:
+        fig = px.scatter(
+            directors_stats,
+            x='movie_count',
+            y='avg_var',
+            color='avg_var',
+            color_continuous_scale=['#E50914', '#B20710', '#FFFFFF'],  # Netflix red → white
+            hover_data={
+                cat: True,
+                'movie_count': True,
+                'avg_var': ':.2f',  # two decimal places
+            },
+            title=cat+" on Netflix: Movie Count vs. Average "+var,
+        )
+    else:
+        fig = px.scatter(
+            directors_stats,
+            x='movie_count',
+            y='avg_var',
+            color='avg_var',
+            color_continuous_scale=['#E50914', '#B20710', '#FFFFFF'],  # Netflix red → white
+            hover_data={
+                cat: True,
+                'movie_count': True,
+                'avg_var': ':.2f',  # two decimal places
+            },
+            title=cat+" on Netflix: Show Count vs. Average "+var,
+        )
+
+    # Style the markers
+    fig.update_traces(
+        marker=dict(size=11, line=dict(width=1, color='white')),
+        selector=dict(mode='markers'),
+        text=None  # no text labels shown directly
+    )
+
+    # Update layout (Netflix-themed)
+    if movies:
+        fig.update_layout(
+            width=1000,
+            height=650,
+            template='plotly_dark',
+            title_font=dict(size=22, color='white'),
+            xaxis_title='Number of Movies on Netflix',
+            yaxis_title='Average '+var+' of Their Movies',
+            plot_bgcolor='#141414',
+            paper_bgcolor='#141414',
+            coloraxis_colorbar=dict(title='Avg '+var, tickfont=dict(color='white')),
+        )
+    else:
+        fig.update_layout(
+            width=1000,
+            height=650,
+            template='plotly_dark',
+            title_font=dict(size=22, color='white'),
+            xaxis_title='Number of Shows on Netflix',
+            yaxis_title='Average '+var+' of Their Shows',
+            plot_bgcolor='#141414',
+            paper_bgcolor='#141414',
+            coloraxis_colorbar=dict(title='Avg '+var, tickfont=dict(color='white')),
+        )
+
+    fig.show()
+    high_potential = directors_stats[
+        (directors_stats['avg_var'] > directors_stats['avg_var'].mean()) &
+        (directors_stats['movie_count'] < directors_stats['movie_count'].median())
+    ]
+
+    if movies:
+        high_potential.rename(columns={'movie_count':'number of movies on Netflix'},inplace=True)
+    else:
+        high_potential.rename(columns={'movie_count':'number of shows on Netflix'},inplace=True)
+    print("TOP 10 HIGH POTENTIAL UNDERREPRESENTED DIRECTORS")
+    print(high_potential.sort_values('avg_var', ascending=False).head(10))
+
