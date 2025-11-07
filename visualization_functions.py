@@ -2711,7 +2711,7 @@ def fraction_lossmaking(df,cat,rev,bud):
 
     fig.show()
 
-def gap_analysis(df,cat,var):
+def gap_analysis(df,cat,var,movies=True):
     import pandas as pd
     import plotly.express as px
 
@@ -2731,19 +2731,34 @@ def gap_analysis(df,cat,var):
     directors_stats = directors_stats[directors_stats['movie_count'] >= 5]
 
     # Create interactive scatter plot
-    fig = px.scatter(
-        directors_stats,
-        x='movie_count',
-        y='avg_var',
-        color='avg_var',
-        color_continuous_scale=['#E50914', '#B20710', '#FFFFFF'],  # Netflix red → white
-        hover_data={
-            cat: True,
-            'movie_count': True,
-            'avg_var': ':.2f',  # two decimal places
-        },
-        title=cat+" on Netflix: Movie Count vs. Average "+var,
-    )
+    if movies:
+        fig = px.scatter(
+            directors_stats,
+            x='movie_count',
+            y='avg_var',
+            color='avg_var',
+            color_continuous_scale=['#E50914', '#B20710', '#FFFFFF'],  # Netflix red → white
+            hover_data={
+                cat: True,
+                'movie_count': True,
+                'avg_var': ':.2f',  # two decimal places
+            },
+            title=cat+" on Netflix: Movie Count vs. Average "+var,
+        )
+    else:
+        fig = px.scatter(
+            directors_stats,
+            x='movie_count',
+            y='avg_var',
+            color='avg_var',
+            color_continuous_scale=['#E50914', '#B20710', '#FFFFFF'],  # Netflix red → white
+            hover_data={
+                cat: True,
+                'movie_count': True,
+                'avg_var': ':.2f',  # two decimal places
+            },
+            title=cat+" on Netflix: Show Count vs. Average "+var,
+        )
 
     # Style the markers
     fig.update_traces(
@@ -2753,17 +2768,30 @@ def gap_analysis(df,cat,var):
     )
 
     # Update layout (Netflix-themed)
-    fig.update_layout(
-        width=1000,
-        height=650,
-        template='plotly_dark',
-        title_font=dict(size=22, color='white'),
-        xaxis_title='Number of Movies on Netflix',
-        yaxis_title='Average '+var+' of Their Movies',
-        plot_bgcolor='#141414',
-        paper_bgcolor='#141414',
-        coloraxis_colorbar=dict(title='Avg '+var, tickfont=dict(color='white')),
-    )
+    if movies:
+        fig.update_layout(
+            width=1000,
+            height=650,
+            template='plotly_dark',
+            title_font=dict(size=22, color='white'),
+            xaxis_title='Number of Movies on Netflix',
+            yaxis_title='Average '+var+' of Their Movies',
+            plot_bgcolor='#141414',
+            paper_bgcolor='#141414',
+            coloraxis_colorbar=dict(title='Avg '+var, tickfont=dict(color='white')),
+        )
+    else:
+        fig.update_layout(
+            width=1000,
+            height=650,
+            template='plotly_dark',
+            title_font=dict(size=22, color='white'),
+            xaxis_title='Number of Shows on Netflix',
+            yaxis_title='Average '+var+' of Their Shows',
+            plot_bgcolor='#141414',
+            paper_bgcolor='#141414',
+            coloraxis_colorbar=dict(title='Avg '+var, tickfont=dict(color='white')),
+        )
 
     fig.show()
     high_potential = directors_stats[
@@ -2771,6 +2799,10 @@ def gap_analysis(df,cat,var):
         (directors_stats['movie_count'] < directors_stats['movie_count'].median())
     ]
 
+    if movies:
+        high_potential.rename(columns={'movie_count':'number of movies on Netflix'},inplace=True)
+    else:
+        high_potential.rename(columns={'movie_count':'number of shows on Netflix'},inplace=True)
     print("TOP 10 HIGH POTENTIAL UNDERREPRESENTED DIRECTORS")
     print(high_potential.sort_values('avg_var', ascending=False).head(10))
 
