@@ -1,3 +1,8 @@
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+import re
+
 def Ftest(df,level,val,alpha=0.05): # John
 
     # INPUTS
@@ -618,6 +623,7 @@ def plot_entropy(entropy_df, entity_col, top_n=10):  # Taniya
 
 def chi2_cont_test(df,cat):
     from scipy.stats import chi2_contingency
+    import pandas as pd
 
     movies=df.copy()
     movies['profitable'] = (movies['revenue'] > movies['budget']).astype(int)
