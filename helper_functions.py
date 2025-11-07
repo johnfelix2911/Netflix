@@ -3,6 +3,26 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import re
 
+#Recommendation Insights additon
+import pandas as pd
+import numpy as np
+from collections import Counter
+from scipy.stats import ttest_ind
+import statsmodels.api as sm
+
+import plotly.express as px
+import plotly.graph_objects as go
+
+# --- Font & Color Definitions ---
+# As per the PDF document
+HEADING_FONT = "Roboto, Arial, sans-serif"
+BODY_FONT = "Merriweather, Georgia, serif"
+NETFLIX_RED = '#E50914'
+TEXT_COLOR = 'white'
+TEMPLATE = 'plotly_dark'
+
+#End of rec insights additions
+
 def generate_boxplot(df,cat,val,outlier=True): # John
 
     # INPUTS:
@@ -511,7 +531,8 @@ def generate_interactive_scatter(df, x, y, color=None, hover=None): # John
 
     fig.show()
 
-def bar_stacked(                    #Sourendra
+
+def bar_stacked(                        #Sourendra
     df,
     *,
     title: str = "Stacked Bar Chart",
@@ -607,7 +628,7 @@ def bar_stacked(                    #Sourendra
 
     return ax
 
-def bar_chart_vertical(             #Sourendra
+def bar_chart_vertical(                 #Sourendra
     s,
     *,
     title: str = "Bar Chart",
@@ -691,7 +712,7 @@ def bar_chart_vertical(             #Sourendra
     if show:
         plt.show()
 
-def heatmap_by_category(            #Sourendra
+def heatmap_by_category(                #Sourendra
     df,
     row_col="year_added",
     col_col="month_added",
@@ -782,7 +803,7 @@ def heatmap_by_category(            #Sourendra
         plt.tight_layout()
         plt.show()
 
-def generate_multi_line_chart(      #Sourendra
+def generate_multi_line_chart(          #Sourendra
     data_dict,
     *,
     title="Line Chart Comparison",
@@ -880,7 +901,7 @@ def generate_multi_line_chart(      #Sourendra
         plt.tight_layout()
         plt.show()
 
-def generate_heatmap_flexible(      #Sourendra
+def generate_heatmap_flexible(          #Sourendra
     df,
     index_col,
     column_col,
@@ -984,6 +1005,291 @@ def generate_heatmap_flexible(      #Sourendra
     plt.show()
 
     #     print(f"✅ Bar chart race saved as: {filename}")
+
+
+
+def plot_niche_superstar_matrix(        #Sourendra
+        df: pd.DataFrame,
+        top_n_actors: int = 15, 
+        top_n_genres: int = 10) -> go.Figure:
+    """
+    (ADVANCED) Generates a heatmap to identify actors who are exceptionally popular in specific genres.
+    """
+    # Explode dataframe for actors and genres
+    actor_df = df.assign(actor=df['cast'].str.split(', ')).explode('actor')
+    genre_df = actor_df.assign(genre=actor_df['listed_in'].str.split(', ')).explode('genre')
+    
+    # Find top actors and genres to keep the matrix focused
+    top_actors = genre_df['actor'].value_counts().nlargest(top_n_actors).index
+    top_genres = genre_df['genre'].value_counts().nlargest(top_n_genres).index
+    
+    # Filter for top talent and genres
+    filtered_df = genre_df[genre_df['actor'].isin(top_actors) & genre_df['genre'].isin(top_genres)]
+    
+    # Create the pivot table (matrix) of average popularity scores
+    pivot_table = pd.pivot_table(filtered_df, values='score', index='actor', columns='genre', aggfunc='mean')
+    
+    fig = px.imshow(pivot_table,
+                    title=f"<b>The Niche Superstar Matrix</b>",
+                    labels=dict(x="Genre", y="Actor", color="Avg. Score"),
+                    color_continuous_scale=['#333333', NETFLIX_RED])
+    
+    fig.update_layout(template=TEMPLATE, title={'x':0.5, 'font': {'size': 20, 'family': HEADING_FONT}},
+                      font=dict(family=BODY_FONT, color=TEXT_COLOR))
+    return fig
+
+def plot_content_strategy_evolution(    #Sourendra
+        df: pd.DataFrame) -> go.Figure:
+    """
+    Generates a 100% stacked area chart showing the proportional shift in genre strategy over time.
+    """
+    df['date_added'] = pd.to_datetime(df['date_added'])
+    df['year_added'] = df['date_added'].dt.year
+    
+    genre_df = df.assign(genre=df['listed_in'].str.split(', ')).explode('genre')
+    top_genres = genre_df['genre'].value_counts().nlargest(8).index
+    genre_df['genre_agg'] = np.where(genre_df['genre'].isin(top_genres), genre_df['genre'], 'Other')
+    
+    yearly_genre_counts = genre_df.groupby(['year_added', 'genre_agg']).size().unstack(fill_value=0)
+    yearly_genre_percent = yearly_genre_counts.apply(lambda x: x*100/sum(x), axis=1)
+    
+    fig = px.area(yearly_genre_percent,
+                  title="<b>Evolution of Content Strategy (Genre Mix)</b>",
+                  labels={'year_added': 'Year Content Added', 'value': 'Percentage of Catalog (%)', 'genre_agg': 'Genre'},
+                  color_discrete_sequence=px.colors.qualitative.Set1) # Using a distinct color palette
+    
+    fig.update_layout(template=TEMPLATE, title={'x':0.5, 'font': {'size': 20, 'family': HEADING_FONT}},
+                      font=dict(family=BODY_FONT, color=TEXT_COLOR))
+    return fig
+
+def plot_content_age_sweet_spot(        #Sourendra
+        df: pd.DataFrame) -> go.Figure:
+    """
+    Generates a scatter plot with a regression line to find the relationship between content age and popularity.
+    """
+    fig = px.scatter(df, x='release_year', y='score',
+                     title='<b>The "Goldilocks Zone" of Content Age</b>',
+                     labels={'release_year': 'Original Release Year', 'score': 'Popularity Score'},
+                     opacity=0.6,
+                     trendline='lowess', # A flexible trendline (Locally Weighted Scatterplot Smoothing)
+                     trendline_color_override='white')
+    fig.update_traces(marker=dict(color=NETFLIX_RED))
+    
+    fig.update_layout(template=TEMPLATE, title={'x':0.5, 'font': {'size': 20, 'family': HEADING_FONT}},
+                      font=dict(family=BODY_FONT, color=TEXT_COLOR))
+    return fig
+
+def plot_genre_complexity_impact(       #Sourendra
+        df: pd.DataFrame) -> go.Figure:
+    """
+    Generates a violin plot to analyze if having more genres affects a title's popularity.
+    """
+    df['genre_count'] = df['listed_in'].apply(lambda x: len(x.split(', ')))
+    
+    fig = px.violin(df[df['genre_count'] <= 5], # Cap at 5 for readability
+                    x='genre_count',
+                    y='score',
+                    box=True, # Display a box plot inside the violin
+                    points='all', # Show individual data points
+                    title='<b>Impact of Genre Complexity on Popularity</b>',
+                    labels={'genre_count': 'Number of Genres Assigned to Title', 'score': 'Popularity Score'},
+                    color_discrete_sequence=[NETFLIX_RED])
+                     
+    fig.update_layout(template=TEMPLATE, title={'x':0.5, 'font': {'size': 20, 'family': HEADING_FONT}},
+                      font=dict(family=BODY_FONT, color=TEXT_COLOR))
+    return fig
+
+def plot_director_efficiency_quadrant(  #Sourendra
+        df: pd.DataFrame, 
+        min_titles: int = 4) -> go.Figure:
+    """
+    (ADVANCED - Presentation Ready) Generates a scatter plot to identify director efficiency.
+    Selectively labels key directors and color-codes quadrants for maximum readability.
+    """
+    director_stats = df.assign(director=df['director'].str.split(', ')).explode('director')
+    director_agg = director_stats.groupby('director')['score'].agg(['mean', 'count']).reset_index()
+    director_agg = director_agg[director_agg['count'] >= min_titles].reset_index(drop=True)
+
+    # Calculate median lines for quadrants
+    median_count = director_agg['count'].median()
+    median_score = director_agg['mean'].median()
+
+    # --- NEW: Assign each director to a quadrant for coloring ---
+    conditions = [
+        (director_agg['count'] >= median_count) & (director_agg['mean'] >= median_score),
+        (director_agg['count'] < median_count) & (director_agg['mean'] >= median_score),
+        (director_agg['count'] >= median_count) & (director_agg['mean'] < median_score),
+        (director_agg['count'] < median_count) & (director_agg['mean'] < median_score)
+    ]
+    choices = ['Proven Hit-Makers', 'Niche Masters', 'Workhorses', 'Emerging Talent']
+    director_agg['quadrant'] = np.select(conditions, choices, default='Other')
+    
+    # --- NEW: Create the plot with color-coded quadrants ---
+    fig = px.scatter(director_agg,
+                     x='count',
+                     y='mean',
+                     color='quadrant',  # Color by the new quadrant column
+                     size='count',
+                     hover_data=['director'], # Show director name on hover
+                     title='<b>The Director Efficiency Quadrant</b>',
+                     labels={'count': 'Volume (Number of Popular Titles)', 'mean': 'Impact (Average Popularity Score)'},
+                     color_discrete_map={ # Assign specific, vibrant colors
+                         'Proven Hit-Makers': 'lightgreen',
+                         'Niche Masters': 'cyan',
+                         'Workhorses': 'orange',
+                         'Emerging Talent': 'grey'
+                     })
+
+    # Add median lines
+    fig.add_vline(x=median_count, line_width=1, line_dash="dash", line_color="grey")
+    fig.add_hline(y=median_score, line_width=1, line_dash="dash", line_color="grey")
+    
+    # --- NEW: Selectively add text labels for clarity ---
+    # Define a list of key directors to label to avoid clutter
+    directors_to_label = [
+        'Martin Scorsese', 'Steven Spielberg', 'Tom Hooper', 'Christopher Nolan',
+        'Quentin Tarantino', 'David Fincher', 'Edgar Wright', 'Bong Joon Ho',
+        'Paul Thomas Anderson', 'Yorgos Lanthimos', 'Lana Wachowski',
+        'Paul W.S. Anderson', 'McG' # Examples from each quadrant
+    ]
+    
+    # Add annotations only for the selected directors
+    for i, row in director_agg.iterrows():
+        if row['director'] in directors_to_label:
+            fig.add_annotation(
+                x=row['count'], y=row['mean'],
+                text=f"<b>{row['director']}</b>",
+                showarrow=True, arrowhead=1, arrowcolor='white', ax=20, ay=-30,
+                font=dict(family=BODY_FONT, size=11, color="white"),
+                bgcolor="rgba(0,0,0,0.6)"
+            )
+
+    fig.update_layout(
+        template=TEMPLATE,
+        title={'x':0.5, 'font': {'size': 24, 'family': HEADING_FONT}},
+        font=dict(family=BODY_FONT, color=TEXT_COLOR, size=12),
+        legend_title_text='<b>Strategic Quadrant</b>'
+    )
+    return fig
+
+def plot_audience_engagement_pyramid(   #Sourendra
+        df: pd.DataFrame) -> go.Figure:
+    """
+    (ADVANCED) Generates a box plot to compare the popularity scores across strategic audience segments.
+    This moves beyond catalog composition to analyze which audience segment drives the most engagement.
+    """
+    # Create a simplified audience segment based on content rating
+    conditions = [
+        df['rating'].isin(['TV-Y', 'TV-Y7', 'TV-G', 'G', 'PG']),
+        df['rating'].isin(['TV-PG', 'TV-14', 'PG-13']),
+        df['rating'].isin(['TV-MA', 'R', 'NC-17'])
+    ]
+    choices = ['Kids & Family', 'Teens & Young Adult', 'Mature Adults']
+    df['audience_segment'] = np.select(conditions, choices, default='Unrated')
+    
+    # Filter out the 'Unrated' category for a cleaner plot
+    plot_df = df[df['audience_segment'] != 'Unrated']
+    
+    fig = px.box(plot_df,
+                 x='audience_segment',
+                 y='score',
+                 color='audience_segment',
+                 title='<b>The Audience Engagement Pyramid</b>',
+                 labels={'audience_segment': 'Strategic Audience Segment', 'score': 'Popularity Score'},
+                 category_orders={'audience_segment': ['Kids & Family', 'Teens & Young Adult', 'Mature Adults']}, # Enforce logical order
+                 color_discrete_map={
+                     'Kids & Family': 'grey',
+                     'Teens & Young Adult': '#B3B3B3',
+                     'Mature Adults': NETFLIX_RED
+                 })
+                 
+    fig.update_layout(template=TEMPLATE, title={'x':0.5, 'font': {'size': 20, 'family': HEADING_FONT}},
+                      font=dict(family=BODY_FONT, color=TEXT_COLOR), showlegend=False)
+    return fig
+
+def plot_global_strategy_validation(    #Sourendra
+        df: pd.DataFrame) -> go.Figure:
+    """
+    (STATISTICALLY-DRIVEN) Compares the performance of US-produced content vs. International content.
+    A t-test validates if there's a significant difference, answering a key strategic question about global expansion.
+    """
+    # Label content as Domestic (US) or International
+    df['origin'] = np.where(df['country'].str.contains("United States", na=False), "Domestic (US)", "International")
+    
+    # Separate the scores for the t-test
+    domestic_scores = df[df['origin'] == 'Domestic (US)']['score']
+    international_scores = df[df['origin'] == 'International']['score']
+    
+    # Perform the independent t-test
+    stat, p_value = ttest_ind(domestic_scores, international_scores, equal_var=False, nan_policy='omit')
+    
+    fig = px.violin(df,
+                    x='origin',
+                    y='score',
+                    color='origin',
+                    box=True,
+                    title=f"<b>Validating the Global Strategy (p-value: {p_value:.3f})</b>",
+                    labels={'origin': 'Content Origin', 'score': 'Popularity Score'},
+                    color_discrete_map={
+                        'Domestic (US)': '#B3B3B3',
+                        'International': NETFLIX_RED
+                    })
+
+    fig.update_layout(template=TEMPLATE, title={'x':0.5, 'font': {'size': 20, 'family': HEADING_FONT}},
+                      font=dict(family=BODY_FONT, color=TEXT_COLOR), showlegend=False)
+    return fig
+
+def weighted_rating(                    #Sourendra
+        x, 
+        m: float, 
+        C: float) -> float:
+    """
+    Calculates the IMDb weighted rating for a movie or show.
+    
+    Args:
+        x: A row of a DataFrame containing 'numVotes' and 'averageRating'.
+        m: The minimum number of votes required (the threshold).
+        C: The mean rating across the whole dataset.
+    
+    Returns:
+        The calculated weighted rating score.
+    """
+    v = x['numVotes']
+    R = x['averageRating']
+    return (v / (v + m)) * R + (m / (v + m)) * C
+
+def plot_content_lag_sweet_spot(        #Sourendra
+        df: pd.DataFrame) -> go.Figure:
+    """
+    (ADVANCED) Analyzes the relationship between "content lag" (time from release to Netflix addition) and popularity.
+    This provides direct insights for the content acquisition team on the value of freshness.
+    """
+    # Create the 'content_lag' feature
+    df_copy = df.copy()
+    df_copy['date_added'] = pd.to_datetime(df_copy['date_added'])
+    df_copy['year_added'] = df_copy['date_added'].dt.year
+    df_copy['content_lag_years'] = df_copy['year_added'] - df_copy['release_year']
+    
+    # Filter for a reasonable range (e.g., content added within 30 years of release)
+    plot_df = df_copy[(df_copy['content_lag_years'] >= 0) & (df_copy['content_lag_years'] <= 30)]
+
+    fig = px.scatter(plot_df,
+                     x='content_lag_years',
+                     y='score',
+                     title='<b>The Content Lag "Sweet Spot"</b>',
+                     labels={'content_lag_years': 'Content Lag (Years from Release to Netflix Addition)', 'score': 'Popularity Score'},
+                     opacity=0.6,
+                     trendline='lowess', # Locally Weighted Scatterplot Smoothing is great for noisy data
+                     trendline_color_override='white')
+    
+    # Update the markers (the dots) to be Netflix Red
+    fig.update_traces(marker=dict(color=NETFLIX_RED))
+    
+    fig.update_layout(template=TEMPLATE, title={'x':0.5, 'font': {'size': 20, 'family': HEADING_FONT}},
+                      font=dict(family=BODY_FONT, color=TEXT_COLOR))
+    return fig
+
+
 def generate_line_chart( #Daksh
     s,
     *,
