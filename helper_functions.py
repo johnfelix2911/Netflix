@@ -2987,7 +2987,7 @@ def plot_movie_coproduction_heatmap(df, top_n): # Aditya
     plt.tight_layout()
     plt.show()
 
-def plot_wordcloud(df,col,save=False):
+def plot_wordcloud(df,col,save=False): # John
     # plots the word cloud of the discrete data column "col"
     # df : dataframe
     # col : column for which you want the wordcloud to be plotted (discrete)
@@ -3020,7 +3020,7 @@ def plot_wordcloud(df,col,save=False):
         plt.savefig(col+'_wordcloud.png')
     plt.show()
 
-def plot_categorywise_corr(df,col1,col2,cat,save=False,sorted=False):
+def plot_categorywise_corr(df,col1,col2,cat,save=False,sorted=False): # John
     # plots the correlation coeff between col1 and col2 for each cat
     # df : dataframe
     # col1 : column 1 (continuous)
@@ -3050,7 +3050,12 @@ def plot_categorywise_corr(df,col1,col2,cat,save=False,sorted=False):
         plt.savefig('correlation between '+col1+' and '+col2+' per '+cat+'.png')
     plt.show()
 
-def plot_change_over_time(df,var,time,cat):
+def plot_change_over_time(df,var,time,cat): # John
+    # plots the change over time of var per cat
+    # df : dataframe
+    # var : continous data column
+    # time : column name that contains data related to time
+    # cat : category column 
 
     import seaborn as sns
     import matplotlib.pyplot as plt
@@ -3100,7 +3105,11 @@ def plot_change_over_time(df,var,time,cat):
 
     fig.show()
 
-def plot_number_across_time(df,cat,time):
+def plot_number_across_time(df,cat,time): # John 
+    # plots the number of occurances of a particular categrory (cat) for every category across time
+    # df : dataframe
+    # cat : category column name
+    # time : column that contains data related to time
 
     import seaborn as sns
     import matplotlib.pyplot as plt
@@ -3134,7 +3143,12 @@ def plot_number_across_time(df,cat,time):
 
     fig.show()
 
-def cumulative_number_plot(df,time,cat):
+def cumulative_number_plot(df,time,cat): # John
+    # plots the cumulative number of occurances of a particular category over time for every catgeory
+    # df : dataframe
+    # time : column that contains data related to time
+    # cat : column name of the categorical data
+
     import seaborn as sns
     import matplotlib.pyplot as plt
     import plotly.express as px
@@ -3187,7 +3201,10 @@ def cumulative_number_plot(df,time,cat):
 
     fig.show()
 
-def sunburst_plot(df,cat1,cat2):
+def sunburst_plot(df,cat1,cat2): # John 
+    # plots a sunburst plot which shows hierarchial relationships between two categorical variables
+    # cat1 : the categorical variable that has upper hierarchy in the sunburst plot
+    # cat2 : the categorical variable that has lower hierarchy in the sunburst plot
 
     import seaborn as sns
     import matplotlib.pyplot as plt
@@ -3237,7 +3254,7 @@ def sunburst_plot(df,cat1,cat2):
 
     fig.show()
 
-def plot_top20(dic,cat,var):
+def plot_top20(dic,cat,var): # John
     import seaborn as sns
     import matplotlib.pyplot as plt
     import plotly.express as px
