@@ -3291,3 +3291,189 @@ def plot_top20(dic,cat,var): # John
 
     fig.show()
 
+def plot_lossmakers(df,rev,bud,cat):
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+
+    loss_df = df[df[rev] < df[bud]]
+
+    loss_counts = (
+        loss_df.groupby(cat)
+        .size()
+        .reset_index(name='num_loss_movies')
+        .sort_values(by='num_loss_movies', ascending=True)
+    )
+
+    fig = px.bar(
+        loss_counts,
+        x=cat,
+        y='num_loss_movies',
+        text='num_loss_movies',
+        title='Number of Movies per Genre with Revenue Less than Budget',
+    )
+
+    fig.update_traces(
+        marker_color='#E50914',       
+        texttemplate='%{text}', 
+        textposition='outside'
+    )
+
+    fig.update_layout(
+        width=1000,
+        height=600,
+        template='plotly_dark',
+        title_font=dict(size=22, color='white', family='Arial Black'),
+        xaxis_title=cat,
+        yaxis_title='Number of Movies (Revenue < Budget)',
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+        xaxis=dict(
+            tickangle=45,
+            categoryorder='total ascending', 
+            tickfont=dict(color='white')
+        ),
+        yaxis=dict(tickfont=dict(color='white')),
+    )
+
+    fig.show()
+
+def fraction_lossmaking(df,cat,rev,bud):
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import plotly.express as px
+
+    total_counts = df.groupby(cat).size().reset_index(name='total_movies')
+
+    loss_counts = (
+        df[df[rev] < df[bud]]
+        .groupby(cat)
+        .size()
+        .reset_index(name='loss_movies')
+    )
+
+    genre_stats = pd.merge(total_counts, loss_counts, on=cat, how='left').fillna(0)
+    genre_stats['loss_fraction'] = genre_stats['loss_movies'] / genre_stats['total_movies']
+
+    genre_stats = genre_stats.sort_values(by='loss_fraction', ascending=True)
+
+    fig = px.bar(
+        genre_stats,
+        x=cat,
+        y='loss_fraction',
+        text=genre_stats['loss_fraction'].apply(lambda x: f"{x:.2%}"),
+        title='Fraction of Movies per Genre that Made a Loss',
+    )
+
+    fig.update_traces(
+        marker_color='#E50914',
+        textposition='outside'
+    )
+
+    fig.update_layout(
+        width=1000,
+        height=600,
+        template='plotly_dark',
+        title_font=dict(size=22, color='white', family='Arial Black'),
+        xaxis_title='Genre',
+        yaxis_title='Fraction of Movies (Revenue < Budget)',
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+        xaxis=dict(
+            tickangle=45,
+            categoryorder='total ascending',
+            tickfont=dict(color='white')
+        ),
+        yaxis=dict(
+            tickformat='.0%',
+            tickfont=dict(color='white')
+        )
+    )
+
+    fig.show()
+
+def chi2_cont_test(df,cat):
+    from scipy.stats import chi2_contingency
+
+    movies=df.copy()
+    movies['profitable'] = (movies['revenue'] > movies['budget']).astype(int)
+
+    movies_exploded = movies.assign(genres=movies[cat].str.split(', ')).explode(cat)
+
+    contingency_table = pd.crosstab(movies_exploded[cat], movies_exploded['profitable'])
+
+    chi2, p, dof, expected = chi2_contingency(contingency_table)
+
+    print("Chi-square Statistic:", chi2)
+    print("Degrees of Freedom:", dof)
+    print("P-value:", p)
+
+    alpha = 0.05
+    if p < alpha:
+        print("\nReject the null hypothesis: Profitability depends on "+cat)
+    else:
+        print("\nFail to reject the null hypothesis: Profitability does not depend on "+cat)
+
+def gap_analysis(df,cat,var):
+    import pandas as pd
+    import plotly.express as px
+
+    # Copy and compute director stats
+    df=df[df[cat]!='missing']
+
+    directors_stats = (
+        df.groupby(cat)
+        .agg(
+            avg_var=(var, 'mean'),
+            movie_count=('title', 'nunique')
+        )
+        .reset_index()
+    )
+
+    # Filter directors with at least 5 movies
+    directors_stats = directors_stats[directors_stats['movie_count'] >= 5]
+
+    # Create interactive scatter plot
+    fig = px.scatter(
+        directors_stats,
+        x='movie_count',
+        y='avg_var',
+        color='avg_var',
+        color_continuous_scale=['#E50914', '#B20710', '#FFFFFF'],  # Netflix red → white
+        hover_data={
+            cat: True,
+            'movie_count': True,
+            'avg_var': ':.2f',  # two decimal places
+        },
+        title=cat+" on Netflix: Movie Count vs. Average "+var,
+    )
+
+    # Style the markers
+    fig.update_traces(
+        marker=dict(size=11, line=dict(width=1, color='white')),
+        selector=dict(mode='markers'),
+        text=None  # no text labels shown directly
+    )
+
+    # Update layout (Netflix-themed)
+    fig.update_layout(
+        width=1000,
+        height=650,
+        template='plotly_dark',
+        title_font=dict(size=22, color='white'),
+        xaxis_title='Number of Movies on Netflix',
+        yaxis_title='Average '+var+' of Their Movies',
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+        coloraxis_colorbar=dict(title='Avg '+var, tickfont=dict(color='white')),
+    )
+
+    fig.show()
+    high_potential = directors_stats[
+        (directors_stats['avg_var'] > directors_stats['avg_var'].mean()) &
+        (directors_stats['movie_count'] < directors_stats['movie_count'].median())
+    ]
+
+    print("TOP 10 HIGH POTENTIAL UNDERREPRESENTED DIRECTORS")
+    print(high_potential.sort_values('avg_var', ascending=False).head(10))
+
